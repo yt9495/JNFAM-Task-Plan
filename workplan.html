@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JNFAM 생산 워크플랜</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:       #f4f6f9;
+  --white:    #ffffff;
+  --border:   #e0e6ed;
+  --border2:  #c8d4e0;
+  --text:     #1a2332;
+  --text-dim: #5a7a9a;
+  --text-sub: #8a9ab0;
+  --accent:   #1565c0;
+  --accent-l: #e3eeff;
+  --green:    #2e7d32;
+  --green-l:  #e8f5e9;
+  --yellow:   #e65100;
+  --yellow-l: #fff3e0;
+  --red:      #c62828;
+  --red-l:    #ffebee;
+  --hf:       #0277bd;
+  --hf-l:     #e1f5fe;
+  --hcl:      #6a1b9a;
+  --hcl-l:    #f3e5f5;
+  --hno3:     #e65100;
+  --hno3-l:   #fff3e0;
+  --shadow:   0 2px 8px rgba(0,0,0,.08);
+  --shadow-md:0 4px 16px rgba(0,0,0,.12);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'Noto Sans KR',sans-serif; min-height:100vh; font-size:14px; }
+
+/* ── HEADER ── */
+.header {
+  background:var(--white); border-bottom:2px solid var(--accent);
+  padding:14px 28px; display:flex; align-items:center; justify-content:space-between;
+  box-shadow:var(--shadow);
+}
+.logo { display:flex; align-items:center; gap:12px; }
+.logo-icon { width:36px; height:36px; background:var(--accent); border-radius:8px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:18px; }
+.logo-text { font-size:18px; font-weight:700; color:var(--accent); letter-spacing:-0.5px; }
+.logo-sub  { font-size:11px; color:var(--text-sub); margin-top:1px; }
+.header-right { display:flex; gap:10px; align-items:center; }
+.sync-badge {
+  display:flex; align-items:center; gap:6px;
+  background:var(--bg); border:1px solid var(--border);
+  border-radius:20px; padding:5px 12px; font-size:12px; color:var(--text-dim);
+}
+.sync-dot { width:8px; height:8px; border-radius:50%; background:#bbb; }
+.sync-dot.on  { background:var(--green); animation:pulse 2s infinite; }
+.sync-dot.ing { background:#f59e0b; animation:pulse .5s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+.date-chip { background:var(--accent-l); color:var(--accent); border-radius:20px; padding:5px 12px; font-size:12px; font-weight:600; }
+
+/* ── TABS ── */
+.tabs { background:var(--white); border-bottom:1px solid var(--border); padding:0 28px; display:flex; gap:0; }
+.tab { padding:12px 22px; border:none; background:transparent; color:var(--text-dim); font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:500; cursor:pointer; border-bottom:3px solid transparent; transition:all .2s; }
+.tab:hover { color:var(--accent); }
+.tab.active { color:var(--accent); border-bottom-color:var(--accent); font-weight:700; }
+
+/* ── MAIN ── */
+.main { max-width:1400px; margin:0 auto; padding:24px 28px; }
+
+/* ── MONTH NAV ── */
+.month-nav { display:flex; align-items:center; gap:14px; margin-bottom:20px; }
+.nav-btn { width:34px; height:34px; border-radius:8px; background:var(--white); border:1px solid var(--border); color:var(--text); font-size:18px; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow); transition:all .2s; }
+.nav-btn:hover { border-color:var(--accent); color:var(--accent); }
+.month-title { font-size:22px; font-weight:700; color:var(--text); min-width:160px; }
+.month-bar { flex:1; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.month-bar-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--green)); border-radius:3px; transition:width .5s; }
+.month-pct { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--text-dim); font-weight:600; }
+
+/* ── KPI CARDS ── */
+.kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+.kpi-card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:18px; box-shadow:var(--shadow); position:relative; overflow:hidden; }
+.kpi-card::before { content:''; position:absolute; top:0; left:0; right:0; height:4px; border-radius:12px 12px 0 0; }
+.kpi-hf::before  { background:var(--hf); }
+.kpi-hcl::before { background:var(--hcl); }
+.kpi-hno3::before{ background:var(--hno3); }
+.kpi-task::before{ background:linear-gradient(90deg,var(--accent),var(--green)); }
+.kpi-label { font-size:11px; color:var(--text-sub); letter-spacing:1px; margin-bottom:6px; font-weight:600; }
+.kpi-value { font-size:28px; font-weight:700; margin-bottom:4px; font-family:'JetBrains Mono',monospace; }
+.kpi-hf .kpi-value  { color:var(--hf); }
+.kpi-hcl .kpi-value { color:var(--hcl); }
+.kpi-hno3 .kpi-value{ color:var(--hno3); }
+.kpi-task .kpi-value{ color:var(--green); }
+.kpi-sub { font-size:11px; color:var(--text-sub); }
+.kpi-bar { margin-top:10px; height:5px; background:var(--border); border-radius:3px; overflow:hidden; }
+.kpi-bar-fill { height:100%; border-radius:3px; transition:width .5s; }
+.kpi-hf .kpi-bar-fill  { background:var(--hf); }
+.kpi-hcl .kpi-bar-fill { background:var(--hcl); }
+.kpi-hno3 .kpi-bar-fill{ background:var(--hno3); }
+.kpi-task .kpi-bar-fill { background:var(--green); }
+
+/* ── SECTION HEADER ── */
+.sec-header { display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+.sec-title { font-size:13px; font-weight:700; color:var(--text-dim); letter-spacing:1px; }
+.sec-line { flex:1; height:1px; background:var(--border); }
+
+/* ── WEEK CARDS ── */
+.weeks-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:12px; }
+.week-card { background:var(--white); border:1px solid var(--border); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); transition:all .2s; }
+.week-card:hover { box-shadow:var(--shadow-md); border-color:var(--border2); }
+.week-card.current { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-l),var(--shadow-md); }
+
+.week-head { background:var(--bg); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border); }
+.week-num { font-weight:700; font-size:16px; color:var(--accent); font-family:'JetBrains Mono',monospace; }
+.week-dates { font-size:10px; color:var(--text-sub); margin-top:1px; }
+.week-badge { font-size:10px; padding:2px 8px; border-radius:10px; font-weight:600; }
+.badge-cur  { background:var(--accent-l);  color:var(--accent); }
+.badge-done { background:var(--green-l);   color:var(--green); }
+.badge-plan { background:var(--yellow-l);  color:var(--yellow); }
+.badge-past { background:var(--border);    color:var(--text-sub); }
+
+.week-body { padding:14px; }
+
+/* prod inputs */
+.pa-labels { display:grid; grid-template-columns:1fr 1fr; gap:2px; margin-bottom:3px; }
+.pa-lbl { font-size:9px; color:var(--text-sub); text-align:center; font-weight:600; letter-spacing:1px; }
+.prod-inputs { display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; margin-bottom:12px; }
+.prod-group { display:flex; flex-direction:column; gap:3px; }
+.prod-lbl { font-size:9px; font-weight:700; letter-spacing:1px; }
+.prod-lbl.hf   { color:var(--hf); }
+.prod-lbl.hcl  { color:var(--hcl); }
+.prod-lbl.hno3 { color:var(--hno3); }
+.prod-row { display:grid; grid-template-columns:1fr 1fr; gap:2px; }
+.mini-input {
+  background:var(--bg); border:1px solid var(--border); border-radius:5px;
+  color:var(--text); font-size:12px; font-weight:600; padding:4px 0;
+  text-align:center; width:100%; font-family:'JetBrains Mono',monospace;
+  transition:border-color .2s;
+}
+.mini-input:focus { outline:none; border-color:var(--accent); background:var(--white); }
+.mini-input.plan  { border-color:#1565c044; }
+.mini-input.actual{ border-color:#2e7d3244; background:var(--green-l); }
+
+/* tasks */
+.task-sec { border-top:1px solid var(--border); padding-top:10px; margin-top:2px; }
+.task-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+.task-lbl  { font-size:10px; font-weight:700; color:var(--text-dim); letter-spacing:1px; }
+.add-task-btn { background:none; border:1px dashed var(--border2); color:var(--text-sub); font-size:11px; border-radius:5px; padding:2px 8px; cursor:pointer; transition:all .2s; }
+.add-task-btn:hover { border-color:var(--accent); color:var(--accent); }
+.task-list { display:flex; flex-direction:column; gap:4px; }
+.task-item { display:flex; align-items:center; gap:7px; background:var(--bg); border-radius:6px; padding:5px 8px; border:1px solid transparent; transition:all .2s; }
+.task-item:hover { border-color:var(--border); background:var(--white); }
+.task-chk { width:16px; height:16px; border:1.5px solid var(--border2); border-radius:4px; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:all .2s; }
+.task-chk.checked { background:var(--green); border-color:var(--green); }
+.task-chk.checked::after { content:'✓'; color:#fff; font-size:10px; font-weight:900; }
+.task-txt { flex:1; background:none; border:none; outline:none; font-family:'Noto Sans KR',sans-serif; font-size:11px; color:var(--text); }
+.task-txt.done { color:var(--text-sub); text-decoration:line-through; }
+.task-del { background:none; border:none; color:var(--text-sub); cursor:pointer; font-size:14px; opacity:0; transition:opacity .2s; }
+.task-item:hover .task-del { opacity:1; }
+.task-del:hover { color:var(--red); }
+
+/* delivery */
+.delivery-row { display:flex; align-items:center; gap:8px; margin-top:10px; padding-top:10px; border-top:1px solid var(--border); }
+.delivery-lbl { font-size:10px; color:var(--text-sub); white-space:nowrap; font-weight:600; }
+.delivery-input { flex:1; background:var(--bg); border:1px solid var(--hno3); border-radius:5px; color:var(--hno3); font-size:12px; font-weight:700; padding:4px 8px; text-align:center; font-family:'JetBrains Mono',monospace; }
+.delivery-input:focus { outline:none; background:var(--white); }
+
+/* ── SUMMARY TABLE ── */
+.summary-table { width:100%; border-collapse:collapse; background:var(--white); border-radius:12px; overflow:hidden; box-shadow:var(--shadow); }
+.summary-table th { background:var(--bg); padding:11px 14px; text-align:left; font-size:11px; font-weight:700; color:var(--text-dim); letter-spacing:1px; border-bottom:1px solid var(--border); }
+.summary-table td { padding:11px 14px; font-size:13px; border-bottom:1px solid var(--border); }
+.summary-table tr:last-child td { border-bottom:none; }
+.summary-table tr:hover td { background:var(--bg); }
+.prod-tag { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:6px; font-size:12px; font-weight:700; }
+.tag-hf   { background:var(--hf-l);   color:var(--hf); }
+.tag-hcl  { background:var(--hcl-l);  color:var(--hcl); }
+.tag-hno3 { background:var(--hno3-l); color:var(--hno3); }
+.diff-pos { color:var(--green); font-weight:700; font-family:'JetBrains Mono',monospace; }
+.diff-neg { color:var(--red);   font-weight:700; font-family:'JetBrains Mono',monospace; }
+.diff-zer { color:var(--text-sub); font-family:'JetBrains Mono',monospace; }
+.prog-bar { width:90px; height:6px; background:var(--border); border-radius:3px; overflow:hidden; display:inline-block; vertical-align:middle; }
+.prog-fill { height:100%; border-radius:3px; }
+
+/* ── KPI PAGE ── */
+.util-card { background:var(--white); border:1px solid var(--border); border-radius:12px; padding:22px; box-shadow:var(--shadow); margin-bottom:20px; display:flex; align-items:center; gap:32px; }
+.gauge-wrap { position:relative; width:120px; height:60px; flex-shrink:0; }
+.gauge-svg  { width:120px; height:120px; margin-top:-60px; }
+.gauge-val  { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:22px; font-weight:700; color:var(--green); font-family:'JetBrains Mono',monospace; }
+.util-bars  { flex:1; }
+.util-title { font-size:11px; font-weight:700; color:var(--text-sub); letter-spacing:1px; margin-bottom:14px; }
+.util-row   { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+.util-lbl   { font-size:12px; font-weight:700; font-family:'JetBrains Mono',monospace; width:40px; }
+.util-track { flex:1; height:8px; background:var(--border); border-radius:4px; overflow:hidden; }
+.util-fill  { height:100%; border-radius:4px; transition:width .5s; }
+.util-pct   { font-size:11px; font-family:'JetBrains Mono',monospace; width:40px; text-align:right; }
+
+/* ── BUTTONS ── */
+.save-bar { display:flex; justify-content:flex-end; gap:10px; margin-top:22px; padding-top:18px; border-top:1px solid var(--border); }
+.btn { display:flex; align-items:center; gap:7px; padding:9px 20px; border-radius:8px; font-family:'Noto Sans KR',sans-serif; font-size:13px; font-weight:600; cursor:pointer; border:none; transition:all .2s; }
+.btn-primary { background:var(--accent); color:#fff; }
+.btn-primary:hover { background:#0d47a1; }
+.btn-secondary { background:var(--white); border:1px solid var(--border); color:var(--text); }
+.btn-secondary:hover { border-color:var(--accent); color:var(--accent); }
+
+/* ── TOAST ── */
+.toast { position:fixed; bottom:24px; right:24px; padding:11px 18px; border-radius:10px; font-size:13px; font-weight:700; transform:translateY(60px); opacity:0; transition:all .3s; z-index:200; box-shadow:var(--shadow-md); }
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.ok  { background:var(--green); color:#fff; }
+.toast.err { background:var(--red);   color:#fff; }
+
+/* ── PAGE ── */
+.page { display:none; }
+.page.active { display:block; }
+
+@media(max-width:1100px){ .weeks-grid{grid-template-columns:repeat(3,1fr)} .kpi-grid{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:700px) { .weeks-grid{grid-template-columns:1fr 1fr} .kpi-grid{grid-template-columns:1fr 1fr} }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="logo">
+    <div class="logo-icon">🏭</div>
+    <div>
+      <div class="logo-text">JNFAM 생산 워크플랜</div>
+      <div class="logo-sub">PRODUCTION WORK PLAN MANAGEMENT · 실시간 공유</div>
+    </div>
+  </div>
+  <div class="header-right">
+    <div class="sync-badge">
+      <div class="sync-dot" id="syncDot"></div>
+      <span id="syncText">연결 중...</span>
+    </div>
+    <div class="date-chip" id="todayChip"></div>
+  </div>
+</div>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="showPage('weekly',this)">📅 주간 워크플랜</button>
+  <button class="tab" onclick="showPage('summary',this)">📊 월간 실적 요약</button>
+  <button class="tab" onclick="showPage('kpi',this)">🎯 KPI 대시보드</button>
+</div>
+
+<div class="main">
+
+  <!-- ── 주간 워크플랜 ── -->
+  <div id="page-weekly" class="page active">
+    <div class="month-nav">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <div class="month-title" id="monthLabel">2026.05</div>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
+      <div class="month-bar"><div class="month-bar-fill" id="monthBarFill" style="width:0%"></div></div>
+      <div class="month-pct" id="monthPct">0%</div>
+    </div>
+
+    <!-- KPI 카드 -->
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-hf">
+        <div class="kpi-label">HF · HYDROFLUORIC ACID</div>
+        <div class="kpi-value" id="kpi-hf">0 / 0</div>
+        <div class="kpi-sub">배치 (실행 / 계획)</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpi-hf-bar" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-hcl">
+        <div class="kpi-label">HCl · HYDROCHLORIC ACID</div>
+        <div class="kpi-value" id="kpi-hcl">0 / 0</div>
+        <div class="kpi-sub">배치 (실행 / 계획)</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpi-hcl-bar" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-hno3">
+        <div class="kpi-label">HNO3 · NITRIC ACID</div>
+        <div class="kpi-value" id="kpi-hno3">0 / 0</div>
+        <div class="kpi-sub">배치 (실행 / 계획)</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpi-hno3-bar" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-task">
+        <div class="kpi-label">TASK COMPLETION RATE</div>
+        <div class="kpi-value" id="kpi-task">0%</div>
+        <div class="kpi-sub" id="kpi-task-sub">0 / 0 tasks</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="kpi-task-bar" style="width:0%"></div></div>
+      </div>
+    </div>
+
+    <!-- 주차 카드 -->
+    <div class="sec-header">
+      <div class="sec-title">주간 계획 및 실행</div>
+      <div class="sec-line"></div>
+    </div>
+    <div class="weeks-grid" id="weeksGrid"></div>
+
+    <div class="save-bar">
+      <button class="btn btn-secondary" onclick="exportData()">📥 데이터 내보내기</button>
+      <button class="btn btn-primary" onclick="saveData()">💾 저장</button>
+    </div>
+  </div>
+
+  <!-- ── 월간 실적 요약 ── -->
+  <div id="page-summary" class="page">
+    <div class="month-nav" style="margin-bottom:20px">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <div class="month-title" id="monthLabel2"></div>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="sec-header"><div class="sec-title">생산 실적 (계획 vs 실행)</div><div class="sec-line"></div></div>
+    <table class="summary-table" style="margin-bottom:22px">
+      <thead><tr>
+        <th>제품</th><th>주차</th><th>계획(배치)</th><th>실행(배치)</th>
+        <th>달성률</th><th>차이</th><th>출하 횟수</th>
+      </tr></thead>
+      <tbody id="summaryBody"></tbody>
+    </table>
+    <div class="sec-header"><div class="sec-title">Task 완료 현황</div><div class="sec-line"></div></div>
+    <table class="summary-table">
+      <thead><tr><th>주차</th><th>기간</th><th>전체</th><th>완료</th><th>완료율</th><th>주요 작업</th></tr></thead>
+      <tbody id="taskSummaryBody"></tbody>
+    </table>
+  </div>
+
+  <!-- ── KPI 대시보드 ── -->
+  <div id="page-kpi" class="page">
+    <div class="month-nav" style="margin-bottom:20px">
+      <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+      <div class="month-title" id="monthLabel3"></div>
+      <button class="nav-btn" onclick="changeMonth(1)">›</button>
+    </div>
+    <div class="util-card">
+      <div class="gauge-wrap">
+        <svg class="gauge-svg" viewBox="0 0 120 120">
+          <path d="M10 110 A50 50 0 0 1 110 110" fill="none" stroke="#e0e6ed" stroke-width="12" stroke-linecap="round"/>
+          <path id="gaugeArc" d="M10 110 A50 50 0 0 1 110 110" fill="none" stroke="url(#ggrad)" stroke-width="12" stroke-linecap="round" stroke-dasharray="157" stroke-dashoffset="157"/>
+          <defs><linearGradient id="ggrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:#1565c0"/><stop offset="100%" style="stop-color:#2e7d32"/>
+          </linearGradient></defs>
+        </svg>
+        <div class="gauge-val" id="gaugeVal">0%</div>
+      </div>
+      <div class="util-bars">
+        <div class="util-title">제품별 생산 가동률 (실행/계획)</div>
+        <div class="util-row">
+          <div class="util-lbl" style="color:var(--hf)">HF</div>
+          <div class="util-track"><div class="util-fill" id="u-hf" style="width:0%;background:var(--hf)"></div></div>
+          <div class="util-pct" id="u-hf-p" style="color:var(--hf)">0%</div>
+        </div>
+        <div class="util-row">
+          <div class="util-lbl" style="color:var(--hcl)">HCl</div>
+          <div class="util-track"><div class="util-fill" id="u-hcl" style="width:0%;background:var(--hcl)"></div></div>
+          <div class="util-pct" id="u-hcl-p" style="color:var(--hcl)">0%</div>
+        </div>
+        <div class="util-row">
+          <div class="util-lbl" style="color:var(--hno3)">HNO3</div>
+          <div class="util-track"><div class="util-fill" id="u-hno3" style="width:0%;background:var(--hno3)"></div></div>
+          <div class="util-pct" id="u-hno3-p" style="color:var(--hno3)">0%</div>
+        </div>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card kpi-hf">
+        <div class="kpi-label">TOTAL HF BATCHES</div>
+        <div class="kpi-value" id="tot-hf">0</div>
+        <div class="kpi-sub" id="tot-hf-s">0 L 생산</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="tot-hf-b" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-hcl">
+        <div class="kpi-label">TOTAL HCl BATCHES</div>
+        <div class="kpi-value" id="tot-hcl">0</div>
+        <div class="kpi-sub" id="tot-hcl-s">0 L 생산</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="tot-hcl-b" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-hno3">
+        <div class="kpi-label">TOTAL HNO3 BATCHES</div>
+        <div class="kpi-value" id="tot-hno3">0</div>
+        <div class="kpi-sub" id="tot-hno3-s">0 L 생산</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="tot-hno3-b" style="width:0%"></div></div>
+      </div>
+      <div class="kpi-card kpi-task">
+        <div class="kpi-label">총 출하 횟수</div>
+        <div class="kpi-value" id="tot-del">0</div>
+        <div class="kpi-sub">월 합계</div>
+        <div class="kpi-bar"><div class="kpi-bar-fill" id="tot-del-b" style="width:0%"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- FIREBASE -->
+<script type="module">
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, update }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey:            "AIzaSyBkY5IGIPC0CsJB55hui7wqCffcCiS33NI",
+  authDomain:        "jnfam-task-plan.firebaseapp.com",
+  databaseURL:       "https://jnfam-task-plan-default-rtdb.firebaseio.com",
+  projectId:         "jnfam-task-plan",
+  storageBucket:     "jnfam-task-plan.firebasestorage.app",
+  messagingSenderId: "76859256151",
+  appId:             "1:76859256151:web:c056fd641305780908e212",
+};
+const app = initializeApp(firebaseConfig);
+const db  = getDatabase(app);
+
+// ── 상태 ─────────────────────────────────────────
+const BATCH = { HF:18400, HCl:18600, HNO3:18480 };
+let curYear = 2026, curMonth = 5;
+let allData = {};   // { "2026-5": { weeks:[...] } }
+
+// ── TODAY ─────────────────────────────────────────
+const today = new Date();
+document.getElementById('todayChip').textContent =
+  today.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
+
+// ── SYNC STATUS ───────────────────────────────────
+function setSyncStatus(s) {
+  const dot = document.getElementById('syncDot');
+  const txt = document.getElementById('syncText');
+  dot.className = 'sync-dot' + (s==='on'?' on':s==='ing'?' ing':'');
+  txt.textContent = s==='on'?'실시간 동기화 중':s==='ing'?'저장 중...':'연결 끊김';
+}
+
+// ── FIREBASE 리스너 ───────────────────────────────
+const wpRef = ref(db, 'workplan');
+onValue(wpRef, snap => {
+  allData = snap.val() || {};
+  setSyncStatus('on');
+  renderWeeks();
+  renderKPI();
+  if (document.getElementById('page-summary').classList.contains('active')) renderSummary();
+}, () => setSyncStatus(''));
+
+// ── HELPER ───────────────────────────────────────
+function storageKey() { return `${curYear}-${curMonth}`; }
+function monthData() {
+  if (!allData[storageKey()]) {
+    allData[storageKey()] = { weeks: getWeeks().map(()=>({
+      hf_plan:'',hf_act:'',hcl_plan:'',hcl_act:'',hno3_plan:'',hno3_act:'',
+      delivery:'',tasks:[]
+    })) };
+  }
+  return allData[storageKey()];
+}
+
+function getWeeks() {
+  const weeks=[], first=new Date(curYear,curMonth-1,1), last=new Date(curYear,curMonth,0);
+  let cur=new Date(first);
+  const dow=cur.getDay(); cur.setDate(cur.getDate()-(dow===0?6:dow-1));
+  let wn=1;
+  while(cur<=last||weeks.length<1){
+    const s=new Date(cur),e=new Date(cur);
+    e.setDate(e.getDate()+6);
+    weeks.push({wn:wn++,start:new Date(s),end:new Date(e)});
+    cur.setDate(cur.getDate()+7);
+    if(cur>last&&weeks.length>=5)break;
+  }
+  return weeks;
+}
+function fmt(d){ return `${d.getMonth()+1}/${d.getDate()}`; }
+function isCurWeek(s,e){ const t=new Date(); return t>=s&&t<=e; }
+function isPast(e){ return new Date()>e; }
+
+function setText(id,v){ const el=document.getElementById(id); if(el)el.textContent=v; }
+function setWidth(id,p){ const el=document.getElementById(id); if(el)el.style.width=`${Math.min(Math.max(p,0),100)}%`; }
+function showToast(msg,ok=true){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.className='toast '+(ok?'ok':'err')+' show';
+  setTimeout(()=>t.className='toast',2500);
+}
+
+// ── SAVE ─────────────────────────────────────────
+window.saveData = async () => {
+  collectInputs();
+  setSyncStatus('ing');
+  await set(ref(db,`workplan/${storageKey()}`), monthData());
+  setSyncStatus('on');
+  showToast('💾 저장 완료!');
+  updateKPI();
+};
+
+// ── AUTO SAVE every 60s ───────────────────────────
+setInterval(()=>{ collectInputs(); set(ref(db,`workplan/${storageKey()}`), monthData()); }, 60000);
+
+// ── COLLECT DOM → DATA ────────────────────────────
+function collectInputs() {
+  const weeks = getWeeks();
+  const md = monthData();
+  weeks.forEach((_,i)=>{
+    const cards = document.querySelectorAll('#weeksGrid .week-card');
+    if(!cards[i]) return;
+    const ins = cards[i].querySelectorAll('.mini-input');
+    if(ins.length>=6){
+      md.weeks[i].hf_plan  = ins[0].value;
+      md.weeks[i].hf_act   = ins[1].value;
+      md.weeks[i].hcl_plan = ins[2].value;
+      md.weeks[i].hcl_act  = ins[3].value;
+      md.weeks[i].hno3_plan= ins[4].value;
+      md.weeks[i].hno3_act = ins[5].value;
+    }
+    const del = cards[i].querySelector('.delivery-input');
+    if(del) md.weeks[i].delivery = del.value;
+    const txts = cards[i].querySelectorAll('.task-txt');
+    const chks = cards[i].querySelectorAll('.task-chk');
+    txts.forEach((el,ti)=>{ if(md.weeks[i].tasks[ti]) md.weeks[i].tasks[ti].text=el.value; });
+    chks.forEach((el,ti)=>{ if(md.weeks[i].tasks[ti]) md.weeks[i].tasks[ti].done=el.classList.contains('checked'); });
+  });
+}
+
+// ── RENDER WEEKS ─────────────────────────────────
+function renderWeeks() {
+  const MONTHS=['','1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  const label=`${curYear}.${String(curMonth).padStart(2,'0')} // ${MONTHS[curMonth]}`;
+  ['monthLabel','monthLabel2','monthLabel3'].forEach(id=>setText(id,label));
+
+  const now=new Date(); const last=new Date(curYear,curMonth,0).getDate();
+  const isNow=now.getFullYear()===curYear&&now.getMonth()===curMonth-1;
+  const pct=isNow?Math.round((now.getDate()-1)/last*100):(now>new Date(curYear,curMonth,0)?100:0);
+  setWidth('monthBarFill',pct); setText('monthPct',`${pct}%`);
+
+  const weeks=getWeeks(); const md=monthData();
+  while(md.weeks.length<weeks.length)
+    md.weeks.push({hf_plan:'',hf_act:'',hcl_plan:'',hcl_act:'',hno3_plan:'',hno3_act:'',delivery:'',tasks:[]});
+
+  const grid=document.getElementById('weeksGrid');
+  grid.innerHTML='';
+
+  weeks.forEach((w,i)=>{
+    const d=md.weeks[i];
+    const isCur=isCurWeek(w.start,w.end);
+    const past=isPast(w.end);
+    const hasAct=d.hf_act||d.hcl_act||d.hno3_act;
+
+    let badgeCls='week-badge ', badgeTxt='';
+    if(isCur){badgeCls+='badge-cur';badgeTxt='● 진행중';}
+    else if(past&&hasAct){badgeCls+='badge-done';badgeTxt='✓ 완료';}
+    else if(past){badgeCls+='badge-past';badgeTxt='- 미입력';}
+    else{badgeCls+='badge-plan';badgeTxt='○ 계획';}
+
+    const done=d.tasks.filter(t=>t.done).length;
+    const total=d.tasks.length;
+
+    const card=document.createElement('div');
+    card.className='week-card'+(isCur?' current':'');
+    card.innerHTML=`
+      <div class="week-head">
+        <div>
+          <div class="week-num">W${w.wn}</div>
+          <div class="week-dates">${fmt(w.start)} – ${fmt(w.end)}</div>
+        </div>
+        <span class="${badgeCls}">${badgeTxt}</span>
+      </div>
+      <div class="week-body">
+        <div class="pa-labels"><div class="pa-lbl">계획</div><div class="pa-lbl">실행</div></div>
+        <div class="prod-inputs">
+          <div class="prod-group">
+            <div class="prod-lbl hf">HF</div>
+            <div class="prod-row">
+              <input class="mini-input plan" type="number" min="0" max="9" placeholder="0" value="${d.hf_plan}" oninput="liveUpdate()">
+              <input class="mini-input actual" type="number" min="0" max="9" placeholder="0" value="${d.hf_act}" oninput="liveUpdate()">
+            </div>
+          </div>
+          <div class="prod-group">
+            <div class="prod-lbl hcl">HCl</div>
+            <div class="prod-row">
+              <input class="mini-input plan" type="number" min="0" max="9" placeholder="0" value="${d.hcl_plan}" oninput="liveUpdate()">
+              <input class="mini-input actual" type="number" min="0" max="9" placeholder="0" value="${d.hcl_act}" oninput="liveUpdate()">
+            </div>
+          </div>
+          <div class="prod-group">
+            <div class="prod-lbl hno3">HNO3</div>
+            <div class="prod-row">
+              <input class="mini-input plan" type="number" min="0" max="9" placeholder="0" value="${d.hno3_plan}" oninput="liveUpdate()">
+              <input class="mini-input actual" type="number" min="0" max="9" placeholder="0" value="${d.hno3_act}" oninput="liveUpdate()">
+            </div>
+          </div>
+        </div>
+        <div class="task-sec">
+          <div class="task-head">
+            <div class="task-lbl">TASKS ${total>0?`(${done}/${total})`:''}</div>
+            <button class="add-task-btn" onclick="addTask(${i})">+ 추가</button>
+          </div>
+          <div class="task-list" id="tl-${i}">
+            ${d.tasks.map((t,ti)=>taskHTML(i,ti,t)).join('')}
+          </div>
+        </div>
+        <div class="delivery-row">
+          <div class="delivery-lbl">출하 횟수</div>
+          <input class="delivery-input" type="number" min="0" placeholder="횟수" value="${d.delivery}" oninput="liveUpdate()">
+        </div>
+      </div>`;
+    grid.appendChild(card);
+  });
+  updateKPI();
+}
+
+function taskHTML(wi,ti,t){
+  return `<div class="task-item" id="tk-${wi}-${ti}">
+    <div class="task-chk${t.done?' checked':''}" onclick="toggleTask(${wi},${ti})"></div>
+    <input class="task-txt${t.done?' done':''}" type="text" value="${t.text||''}" placeholder="작업 내용 입력..."
+      onchange="updateTaskText(${wi},${ti},this.value)">
+    <button class="task-del" onclick="delTask(${wi},${ti})">×</button>
+  </div>`;
+}
+
+// ── TASK OPS ─────────────────────────────────────
+window.addTask = (wi) => {
+  collectInputs();
+  monthData().weeks[wi].tasks.push({text:'',done:false});
+  renderWeeks();
+  setTimeout(()=>{ const ls=document.querySelectorAll(`#tl-${wi} .task-txt`); if(ls.length)ls[ls.length-1].focus(); },50);
+};
+window.toggleTask = (wi,ti) => {
+  collectInputs();
+  const md=monthData();
+  md.weeks[wi].tasks[ti].done=!md.weeks[wi].tasks[ti].done;
+  const chk=document.querySelector(`#tk-${wi}-${ti} .task-chk`);
+  const txt=document.querySelector(`#tk-${wi}-${ti} .task-txt`);
+  if(chk) chk.classList.toggle('checked');
+  if(txt) txt.classList.toggle('done');
+  // 주차 헤더 task count 업데이트
+  const done=md.weeks[wi].tasks.filter(t=>t.done).length;
+  const total=md.weeks[wi].tasks.length;
+  const lbl=document.querySelectorAll('.task-lbl')[wi];
+  if(lbl) lbl.textContent=`TASKS ${total>0?`(${done}/${total})`:''}`;
+  updateKPI();
+};
+window.delTask = (wi,ti) => {
+  collectInputs();
+  monthData().weeks[wi].tasks.splice(ti,1);
+  renderWeeks();
+};
+window.updateTaskText = (wi,ti,v) => { monthData().weeks[wi].tasks[ti].text=v; };
+window.liveUpdate = () => { collectInputs(); updateKPI(); };
+
+// ── KPI ──────────────────────────────────────────
+function updateKPI(){
+  const md=monthData();
+  let hp=0,ha=0,cp=0,ca=0,np=0,na=0,td=0,ta=0,del=0;
+  md.weeks.forEach(w=>{
+    hp+=Number(w.hf_plan)||0;  ha+=Number(w.hf_act)||0;
+    cp+=Number(w.hcl_plan)||0; ca+=Number(w.hcl_act)||0;
+    np+=Number(w.hno3_plan)||0;na+=Number(w.hno3_act)||0;
+    del+=Number(w.delivery)||0;
+    w.tasks.forEach(t=>{ta++;if(t.done)td++;});
+  });
+  setText('kpi-hf',`${ha} / ${hp}`); setWidth('kpi-hf-bar',hp?ha/hp*100:0);
+  setText('kpi-hcl',`${ca} / ${cp}`);setWidth('kpi-hcl-bar',cp?ca/cp*100:0);
+  setText('kpi-hno3',`${na} / ${np}`);setWidth('kpi-hno3-bar',np?na/np*100:0);
+  const tp=ta?Math.round(td/ta*100):0;
+  setText('kpi-task',`${tp}%`); setText('kpi-task-sub',`${td} / ${ta} tasks`); setWidth('kpi-task-bar',tp);
+  renderKPI();
+}
+
+function renderKPI(){
+  const md=monthData();
+  let hp=0,ha=0,cp=0,ca=0,np=0,na=0,del=0;
+  md.weeks.forEach(w=>{
+    hp+=Number(w.hf_plan)||0;  ha+=Number(w.hf_act)||0;
+    cp+=Number(w.hcl_plan)||0; ca+=Number(w.hcl_act)||0;
+    np+=Number(w.hno3_plan)||0;na+=Number(w.hno3_act)||0;
+    del+=Number(w.delivery)||0;
+  });
+  const hu=hp?Math.round(ha/hp*100):0;
+  const cu=cp?Math.round(ca/cp*100):0;
+  const nu=np?Math.round(na/np*100):0;
+  const ov=(hp+cp+np)?Math.round((ha+ca+na)/(hp+cp+np)*100):0;
+
+  setWidth('u-hf',hu); setText('u-hf-p',`${hu}%`);
+  setWidth('u-hcl',cu);setText('u-hcl-p',`${cu}%`);
+  setWidth('u-hno3',nu);setText('u-hno3-p',`${nu}%`);
+  setText('gaugeVal',`${ov}%`);
+  const arc=document.getElementById('gaugeArc');
+  if(arc) arc.style.strokeDashoffset=157-(157*Math.min(ov,100)/100);
+
+  setText('tot-hf',ha);  setText('tot-hf-s',`${(ha*BATCH.HF).toLocaleString()} L`);  setWidth('tot-hf-b',ha/4*100);
+  setText('tot-hcl',ca); setText('tot-hcl-s',`${(ca*BATCH.HCl).toLocaleString()} L`); setWidth('tot-hcl-b',ca/4*100);
+  setText('tot-hno3',na);setText('tot-hno3-s',`${(na*BATCH.HNO3).toLocaleString()} L`);setWidth('tot-hno3-b',na/4*100);
+  setText('tot-del',del); setWidth('tot-del-b',del/20*100);
+}
+
+// ── SUMMARY ──────────────────────────────────────
+function renderSummary(){
+  const md=monthData(); const weeks=getWeeks();
+  const prods=[
+    {name:'HF',tag:'hf',pk:'hf_plan',ak:'hf_act'},
+    {name:'HCl',tag:'hcl',pk:'hcl_plan',ak:'hcl_act'},
+    {name:'HNO3',tag:'hno3',pk:'hno3_plan',ak:'hno3_act'},
+  ];
+  let sb='';
+  prods.forEach(pr=>{
+    weeks.forEach((w,i)=>{
+      const d=md.weeks[i];
+      const plan=Number(d[pr.pk])||0, act=Number(d[pr.ak])||0;
+      const rate=plan?Math.round(act/plan*100):(act>0?100:0);
+      const diff=act-plan;
+      const diffEl=diff>0?`<span class="diff-pos">+${diff}</span>`:diff<0?`<span class="diff-neg">${diff}</span>`:`<span class="diff-zer">-</span>`;
+      sb+=`<tr>
+        <td><span class="prod-tag tag-${pr.tag}">${pr.name}</span></td>
+        <td style="font-family:'JetBrains Mono',monospace;font-size:12px">W${w.wn} (${fmt(w.start)}~${fmt(w.end)})</td>
+        <td style="font-family:'JetBrains Mono',monospace">${plan}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${act}</td>
+        <td><span class="prog-bar"><span class="prog-fill" style="width:${Math.min(rate,100)}%;background:var(--${pr.tag})"></span></span> <span style="font-size:11px;font-family:'JetBrains Mono',monospace">${rate}%</span></td>
+        <td>${diffEl}</td>
+        <td style="font-family:'JetBrains Mono',monospace">${i===weeks.length-1?d.delivery||'-':'-'}</td>
+      </tr>`;
+    });
+  });
+  const el=document.getElementById('summaryBody'); if(el) el.innerHTML=sb;
+
+  let tb='';
+  weeks.forEach((w,i)=>{
+    const d=md.weeks[i];
+    const done=d.tasks.filter(t=>t.done).length, tot=d.tasks.length;
+    const rate=tot?Math.round(done/tot*100):0;
+    const main=d.tasks.slice(0,2).map(t=>t.text).filter(Boolean).join(', ')||'-';
+    tb+=`<tr>
+      <td style="font-weight:700;color:var(--accent)">W${w.wn}</td>
+      <td style="font-size:12px;color:var(--text-dim)">${fmt(w.start)} ~ ${fmt(w.end)}</td>
+      <td>${tot}</td><td style="color:var(--green);font-weight:700">${done}</td>
+      <td><span class="prog-bar"><span class="prog-fill" style="width:${rate}%;background:var(--green)"></span></span> <span style="font-size:11px">${rate}%</span></td>
+      <td style="font-size:12px;color:var(--text-dim)">${main}</td>
+    </tr>`;
+  });
+  const el2=document.getElementById('taskSummaryBody'); if(el2) el2.innerHTML=tb;
+}
+
+// ── PAGE NAV ─────────────────────────────────────
+window.showPage = (name, btn) => {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  btn.classList.add('active');
+  if(name==='summary') renderSummary();
+  if(name==='kpi') renderKPI();
+};
+
+// ── MONTH NAV ────────────────────────────────────
+window.changeMonth = (d) => {
+  collectInputs();
+  curMonth+=d;
+  if(curMonth>12){curMonth=1;curYear++;}
+  if(curMonth<1) {curMonth=12;curYear--;}
+  if(curYear<2026||(curYear===2026&&curMonth<5)){
+    curMonth-=d; if(curMonth>12){curMonth=12;curYear--;} if(curMonth<1){curMonth=1;curYear++;}
+    showToast('2026년 5월부터 입력 가능합니다',false); return;
+  }
+  renderWeeks();
+};
+
+// ── EXPORT ───────────────────────────────────────
+window.exportData = () => {
+  const blob=new Blob([JSON.stringify(allData,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`workplan_${curYear}_${curMonth}.json`; a.click();
+  showToast('📥 내보내기 완료!');
+};
+
+</script>
+</body>
+</html>
