@@ -750,7 +750,7 @@ window.downloadCSV = () => {
   const a = document.createElement('a');
   const month = document.getElementById('filterMonth').value || '전체';
   a.href = url;
-  a.download = `JNFAM_Task_${curYear}년_${month}월_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.csv`;
+  a.download = 'JNFAM_Task_' + curYear + '년_' + month + '월.csv';
   a.click();
   URL.revokeObjectURL(url);
   showToast('✅ CSV 다운로드 완료!');
@@ -812,7 +812,7 @@ window.downloadExcel = () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = `JNFAM_Task_${curYear}년_${month}월_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xls`;
+  a.download = 'JNFAM_Task_' + curYear + '년_' + month + '월.xls';
   a.click();
   URL.revokeObjectURL(url);
   showToast('✅ Excel 다운로드 완료!');
