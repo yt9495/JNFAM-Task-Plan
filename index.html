@@ -56,12 +56,13 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .main{padding:24px 28px;}
 
 /* CONTROLS */
-.controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:14px;}
+.controls{display:flex;flex-direction:column;gap:12px;margin-bottom:20px;}
+.controls-top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
 .month-nav{display:flex;align-items:center;gap:10px;}
 .nav-btn{width:34px;height:34px;border-radius:8px;background:var(--white);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:var(--shadow);}
 .nav-btn:hover{border-color:var(--accent);color:var(--accent);}
 .month-title{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--text);min-width:140px;}
-.stats-row{display:flex;gap:8px;flex-wrap:wrap;}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
 .stat-chip{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;box-shadow:var(--shadow);}
 .stat-dot{width:7px;height:7px;border-radius:50%;}
 .stat-val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;}
@@ -73,7 +74,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .cal-dow:last-child{border-right:none;}
 .cal-dow.sat{color:var(--cyan);}.cal-dow.sun{color:var(--red);}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-.cal-day{min-height:110px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
+.cal-day{height:120px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
 .cal-day:nth-child(7n){border-right:none;}
 .cal-day:hover{background:var(--accent-l);}
 .cal-day.other-month{background:var(--surface2);opacity:.5;}
@@ -170,7 +171,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   .list-header,.list-item{grid-template-columns:1fr 80px 80px;}
   .list-header .list-hdr:nth-child(4),.list-header .list-hdr:nth-child(5),
   .list-item>*:nth-child(4),.list-item>*:nth-child(5){display:none;}
-  .cal-day{min-height:70px;padding:5px 3px;}
+  .cal-day{height:80px;padding:5px 3px;overflow:hidden;}
 }
 </style>
 </head>
@@ -204,10 +205,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <!-- CALENDAR TAB -->
   <div id="tab-calendar">
     <div class="controls">
-      <div class="month-nav">
-        <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
-        <div class="month-title" id="monthTitle"></div>
-        <button class="nav-btn" onclick="changeMonth(1)">›</button>
+      <div class="controls-top">
+        <div class="month-nav">
+          <button class="nav-btn" onclick="changeMonth(-1)">‹</button>
+          <div class="month-title" id="monthTitle"></div>
+          <button class="nav-btn" onclick="changeMonth(1)">›</button>
+        </div>
       </div>
       <div class="stats-row" id="statsRow"></div>
     </div>
