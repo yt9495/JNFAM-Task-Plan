@@ -69,17 +69,21 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 
 /* CALENDAR */
 .calendar{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
-.cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--surface2);border-bottom:1px solid var(--border);}
+.cal-header{display:grid;grid-template-columns:repeat(5,1fr) 0.55fr;background:var(--surface2);border-bottom:1px solid var(--border);}
 .cal-dow{padding:10px 0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text3);border-right:1px solid var(--border);}
 .cal-dow:last-child{border-right:none;}
-.cal-dow.sat{color:var(--cyan);}.cal-dow.sun{color:var(--red);}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
+.cal-dow.sat{color:var(--cyan);}.cal-dow.sun{color:var(--red);}.cal-dow.wknd{color:var(--text3);font-size:10px;}
+.cal-grid{display:grid;grid-template-columns:repeat(5,1fr) 0.55fr;}
 .cal-day{height:120px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
 .cal-day:nth-child(7n){border-right:none;}
 .cal-day:hover{background:var(--accent-l);}
 .cal-day.other-month{background:var(--surface2);opacity:.5;}
 .cal-day.today{background:#eff4ff;box-shadow:inset 0 0 0 2px var(--accent);}
 .cal-day.sat .day-num{color:var(--cyan);}.cal-day.sun .day-num{color:var(--red);}
+.cal-day.weekend-cell{background:var(--surface2);font-size:10px;padding:6px 5px;}
+.weekend-day-label{font-size:9px;font-weight:700;color:var(--text3);margin-bottom:3px;margin-top:6px;padding-top:4px;border-top:1px dashed var(--border);}
+.weekend-day-label:first-child{margin-top:0;border-top:none;padding-top:0;}
+.task-chip.weekend{font-size:9px;padding:2px 4px;}
 .day-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
 .today-label{font-size:9px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px;font-weight:700;}
 .task-chip{display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:4px;font-size:10px;margin-bottom:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-left:2px solid transparent;}
@@ -171,7 +175,9 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   .list-header,.list-item{grid-template-columns:1fr 80px 80px;}
   .list-header .list-hdr:nth-child(4),.list-header .list-hdr:nth-child(5),
   .list-item>*:nth-child(4),.list-item>*:nth-child(5){display:none;}
+  .cal-header,.cal-grid{grid-template-columns:repeat(5,1fr) 0.45fr;}
   .cal-day{height:80px;padding:5px 3px;overflow:hidden;}
+  .weekend-cell{height:80px;}
 }
 </style>
 </head>
@@ -219,7 +225,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
         <div class="cal-dow">MON</div><div class="cal-dow">TUE</div>
         <div class="cal-dow">WED</div><div class="cal-dow">THU</div>
         <div class="cal-dow">FRI</div>
-        <div class="cal-dow sat">SAT</div><div class="cal-dow sun">SUN</div>
+        <div class="cal-dow wknd">주말</div>
       </div>
       <div class="cal-grid" id="calGrid">
         <div class="loading" style="grid-column:1/-1"><div class="spinner"></div>데이터 로딩 중...</div>
@@ -456,42 +462,76 @@ function renderCalendar() {
 
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
-  for (let i=0; i<42; i++) {
-    const d = new Date(calStart);
-    d.setDate(d.getDate()+i);
-    const inMonth = d.getMonth()===curMonth && d.getFullYear()===curYear;
-    const isToday = d.getTime()===today.getTime();
-    const dow = d.getDay();
-    const isSat = dow===6, isSun = dow===0;
-    const ds = d.toISOString().slice(0,10);
-    const dayTasks = byDate[ds]||[];
 
-    let cls = 'cal-day';
-    if (!inMonth) cls+=' other-month';
-    if (isToday)  cls+=' today';
-    if (isSat)    cls+=' sat';
-    if (isSun)    cls+=' sun';
+  // 월~금 + 주말(토+일 합친 칸) 구조로 렌더링
+  // calStart는 월요일 기준
+  const weeksNeeded = 6;
+  for (let week=0; week<weeksNeeded; week++) {
+    // 월~금 (5칸)
+    for (let wd=0; wd<5; wd++) {
+      const d = new Date(calStart);
+      d.setDate(d.getDate() + week*7 + wd);
+      const inMonth = d.getMonth()===curMonth && d.getFullYear()===curYear;
+      const isToday = d.getTime()===today.getTime();
+      const ds = d.toISOString().slice(0,10);
+      const dayTasks = byDate[ds]||[];
 
-    const MAX=4;
-    const chips = dayTasks.slice(0,MAX).map(t=>
-      `<div class="task-chip ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
-        ${taskPrefix(t)} ${t.text}
-      </div>`).join('');
-    const more = dayTasks.length>MAX ? `<div class="task-more">+${dayTasks.length-MAX}개 더</div>` : '';
+      let cls = 'cal-day';
+      if (!inMonth) cls+=' other-month';
+      if (isToday)  cls+=' today';
 
-    const cell = document.createElement('div');
-    cell.className = cls;
-    cell.innerHTML = `
-      <div class="day-num">
-        <span>${d.getDate()}</span>
-        ${isToday?'<span class="today-label">TODAY</span>':''}
-      </div>${chips}${more}`;
-    cell.onclick = (e) => {
-      if (e.target === cell || e.target.classList.contains('day-num') || e.target.tagName==='SPAN') {
-        openDayModal(ds, e);
-      }
+      const MAX=3;
+      const chips = dayTasks.slice(0,MAX).map(t=>
+        `<div class="task-chip ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
+          ${taskPrefix(t)} ${t.text}
+        </div>`).join('');
+      const more = dayTasks.length>MAX ? `<div class="task-more">+${dayTasks.length-MAX}개 더</div>` : '';
+
+      const cell = document.createElement('div');
+      cell.className = cls;
+      cell.innerHTML = `
+        <div class="day-num">
+          <span>${d.getDate()}</span>
+          ${isToday?'<span class="today-label">TODAY</span>':''}
+        </div>${chips}${more}`;
+      cell.onclick = (ev) => {
+        if (ev.target===cell||ev.target.classList.contains('day-num')||ev.target.tagName==='SPAN')
+          openDayModal(ds, ev);
+      };
+      grid.appendChild(cell);
+    }
+
+    // 주말 합칩 칸 (토+일)
+    const sat = new Date(calStart);
+    sat.setDate(sat.getDate() + week*7 + 5); // 토요일
+    const sun = new Date(calStart);
+    sun.setDate(sun.getDate() + week*7 + 6); // 일요일
+
+    const satDs = sat.toISOString().slice(0,10);
+    const sunDs = sun.toISOString().slice(0,10);
+    const satTasks = byDate[satDs]||[];
+    const sunTasks = byDate[sunDs]||[];
+    const satInMonth = sat.getMonth()===curMonth && sat.getFullYear()===curYear;
+    const sunInMonth = sun.getMonth()===curMonth && sun.getFullYear()===curYear;
+    const inMonth = satInMonth || sunInMonth;
+
+    const wkndCell = document.createElement('div');
+    wkndCell.className = 'cal-day weekend-cell' + (inMonth?'':' other-month');
+
+    const renderWkndDay = (d, ds, tasks, label) => {
+      const isToday2 = d.getTime()===today.getTime();
+      const chips = tasks.slice(0,2).map(t=>
+        `<div class="task-chip weekend ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
+          ${taskPrefix(t)} ${t.text}
+        </div>`).join('');
+      const more = tasks.length>2?`<div class="task-more">+${tasks.length-2}</div>`:'';
+      return `<div class="weekend-day-label">${label} ${d.getDate()}${isToday2?' <span class="today-label">TODAY</span>':''}</div>${chips}${more}`;
     };
-    grid.appendChild(cell);
+
+    wkndCell.innerHTML =
+      renderWkndDay(sat, satDs, satTasks, '토') +
+      renderWkndDay(sun, sunDs, sunTasks, '일');
+    grid.appendChild(wkndCell);
   }
 }
 
