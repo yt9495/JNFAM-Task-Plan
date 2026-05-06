@@ -152,6 +152,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
 .filter-select{background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;box-shadow:var(--shadow);}
 .filter-select:focus{outline:none;border-color:var(--accent);}
+.btn-dl{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;border:none;font-family:'Noto Sans KR',sans-serif;transition:all .15s;box-shadow:var(--shadow);}
+.btn-dl-csv{background:var(--green-l);color:var(--green);border:1px solid #bbf7d0;}
+.btn-dl-csv:hover{background:#dcfce7;}
+.btn-dl-xlsx{background:var(--accent-l);color:var(--accent);border:1px solid #bfdbfe;}
+.btn-dl-xlsx:hover{background:#dbeafe;}
+.dl-group{display:flex;gap:8px;margin-left:auto;}
 
 /* LOADING */
 .loading{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text3);font-size:13px;}
@@ -252,6 +258,10 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
         <option>생산</option><option>출하</option><option>입고</option>
         <option>점검</option><option>미팅</option><option>행정</option><option>기타</option>
       </select>
+      <div class="dl-group">
+        <button class="btn-dl btn-dl-csv" onclick="downloadCSV()">⬇ CSV</button>
+        <button class="btn-dl btn-dl-xlsx" onclick="downloadExcel()">⬇ Excel</button>
+      </div>
     </div>
     <div class="list-header">
       <div class="list-hdr">TASK</div>
@@ -709,6 +719,113 @@ function renderList() {
       </div>`).join('')
     : '<div class="empty"><div class="empty-icon">📭</div><div>Task가 없습니다</div></div>';
 }
+
+// ── 필터 적용된 리스트 가져오기 (다운로드용 공통 함수) ──
+function getFilteredList() {
+  const fs = document.getElementById('filterStatus').value;
+  const fm = document.getElementById('filterMonth').value;
+  const fc = document.getElementById('filterCat').value;
+  let list = Object.entries(tasks)
+    .filter(([,t])=>t&&t.deadline)
+    .map(([k,t])=>({...t,_key:k}));
+  if (fs) list = list.filter(t=>t.status===fs);
+  if (fm) list = list.filter(t=>t.deadline.startsWith(`${curYear}-${fm}`));
+  if (fc) list = list.filter(t=>t.category===fc);
+  list.sort((a,b)=>a.deadline.localeCompare(b.deadline));
+  return list;
+}
+
+// ── CSV 다운로드 ──────────────────────────────────────
+window.downloadCSV = () => {
+  const list = getFilteredList();
+  if (!list.length) { showToast('다운로드할 데이터가 없어요', true); return; }
+
+  const headers = ['Task 내용','마감일','담당자','카테고리','우선순위','상태'];
+  const rows = list.map(t => [
+    `"${(t.text||'').replace(/"/g,'""')}"`,
+    t.deadline||'',
+    `"${(t.worker||'').replace(/"/g,'""')}"`,
+    t.category||'',
+    t.priority||'',
+    t.status||''
+  ]);
+
+  const csvContent = '﻿' + // BOM: 한글 깨짐 방지
+    [headers, ...rows].map(r=>r.join(',')).join('
+');
+
+  const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const month = document.getElementById('filterMonth').value || '전체';
+  a.href = url;
+  a.download = `JNFAM_Task_${curYear}년_${month}월_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ CSV 다운로드 완료!');
+};
+
+// ── Excel 다운로드 (HTML Table → .xls 방식) ──────────
+window.downloadExcel = () => {
+  const list = getFilteredList();
+  if (!list.length) { showToast('다운로드할 데이터가 없어요', true); return; }
+
+  const statusColor = {
+    '완료':'#dcfce7','진행중':'#dbeafe','예정':'#f9fafb','보류':'#fef9c3'
+  };
+  const ddayText = (t) => {
+    if (t.status==='완료') return '완료';
+    const d = Math.round((new Date(t.deadline+'T00:00:00') - today) / 86400000);
+    return d < 0 ? `${-d}일 지연` : `D-${d}`;
+  };
+
+  const rows = list.map(t => `
+    <tr>
+      <td style="background:${statusColor[t.status]||'#fff'};padding:6px 10px;border:1px solid #e2e8f0">${t.text||''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.deadline||''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${ddayText(t)}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.worker||'-'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.category||'-'}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.priority||'-'}</td>
+      <td style="background:${statusColor[t.status]||'#fff'};padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700">${t.status||''}</td>
+    </tr>`).join('');
+
+  const month = document.getElementById('filterMonth').value||'전체';
+  const html = `
+    <html xmlns:o="urn:schemas-microsoft-com:office:office"
+          xmlns:x="urn:schemas-microsoft-com:office:excel"
+          xmlns="http://www.w3.org/TR/REC-html40">
+    <head><meta charset="UTF-8">
+    <!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets>
+    <x:ExcelWorksheet><x:Name>Task 목록</x:Name>
+    <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+    </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
+    </head><body>
+    <table border="1" style="border-collapse:collapse;font-family:Malgun Gothic,sans-serif;font-size:12px">
+      <thead>
+        <tr style="background:#2563eb;color:#fff;font-weight:700">
+          <th style="padding:8px 12px;min-width:200px">Task 내용</th>
+          <th style="padding:8px 12px;min-width:90px">마감일</th>
+          <th style="padding:8px 12px;min-width:70px">D-DAY</th>
+          <th style="padding:8px 12px;min-width:80px">담당자</th>
+          <th style="padding:8px 12px;min-width:70px">카테고리</th>
+          <th style="padding:8px 12px;min-width:60px">우선순위</th>
+          <th style="padding:8px 12px;min-width:70px">상태</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    </body></html>`;
+
+  const blob = new Blob(['﻿'+html], {type:'application/vnd.ms-excel;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `JNFAM_Task_${curYear}년_${month}월_${new Date().toLocaleDateString('ko-KR').replace(/\. /g,'-').replace('.','')}.xls`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✅ Excel 다운로드 완료!');
+};
 
 window.updateStatusList = async (key, val) => {
   setSyncStatus('syncing');
