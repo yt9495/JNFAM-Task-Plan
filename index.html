@@ -107,6 +107,17 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .status-select:focus{outline:none;border-color:var(--accent);}
 .del-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:3px 7px;border-radius:5px;}
 .del-btn:hover{color:var(--red);background:var(--red-l);}
+.edit-btn{position:absolute;top:10px;right:38px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:13px;padding:3px 7px;border-radius:5px;}
+.edit-btn:hover{color:var(--accent);background:var(--accent-l);}
+.edit-form{margin-top:10px;display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--border);padding-top:10px;}
+.edit-input{width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;font-family:"Noto Sans KR",sans-serif;outline:none;background:var(--white);color:var(--text);}
+.edit-input:focus{border-color:var(--accent);}
+.edit-row{display:flex;gap:7px;}
+.edit-row .edit-input{flex:1;}
+.edit-save{background:var(--accent);color:#fff;border:none;border-radius:7px;padding:7px 16px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans KR",sans-serif;}
+.edit-save:hover{background:#1d4ed8;}
+.edit-cancel{background:var(--white);color:var(--text2);border:1px solid var(--border);border-radius:7px;padding:7px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:"Noto Sans KR",sans-serif;}
+.edit-cancel:hover{background:var(--surface2);}
 
 /* ADD FORM */
 .add-panel{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;box-shadow:var(--shadow);}
@@ -504,8 +515,11 @@ window.openDayModal = (ds, e) => {
       const dd = diffDays(t.deadline);
       const ddTxt = t.status==='완료'?'완료됨':(dd<0?`${-dd}일 지연`:`D-${dd}`);
       const ddColor = t.status==='완료'?'var(--green)':(dd<0?'var(--red)':'var(--text2)');
+      const cats = ['생산','출하','입고','점검','미팅','행정','기타'].map(c=>`<option${c===t.category?' selected':''}>${c}</option>`).join('');
+      const prios = ['높음','보통','낮음'].map(p=>`<option${p===t.priority?' selected':''}>${p}</option>`).join('');
       return `
-      <div class="modal-task-item">
+      <div class="modal-task-item" id="item-${t._key}">
+        <button class="edit-btn" onclick="toggleEdit('${t._key}','${ds}')" title="편집">✏️</button>
         <button class="del-btn" onclick="deleteTask('${t._key}','${ds}')" title="삭제">×</button>
         <div class="modal-task-text">${t.text}</div>
         <div class="modal-task-meta">
@@ -517,6 +531,21 @@ window.openDayModal = (ds, e) => {
             ${['예정','진행중','완료','보류'].map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('')}
           </select>
         </div>
+        <div class="edit-form" id="edit-${t._key}" style="display:none">
+          <input class="edit-input" id="edit-text-${t._key}" value="${t.text.replace(/"/g,'&quot;')}" placeholder="Task 내용"/>
+          <div class="edit-row">
+            <input class="edit-input" id="edit-deadline-${t._key}" type="date" value="${t.deadline}"/>
+            <input class="edit-input" id="edit-worker-${t._key}" value="${t.worker||''}" placeholder="담당자"/>
+          </div>
+          <div class="edit-row">
+            <select class="edit-input" id="edit-cat-${t._key}">${cats}</select>
+            <select class="edit-input" id="edit-prio-${t._key}">${prios}</select>
+          </div>
+          <div class="edit-row">
+            <button class="edit-save" onclick="saveEdit('${t._key}','${ds}')">💾 저장</button>
+            <button class="edit-cancel" onclick="toggleEdit('${t._key}','${ds}')">취소</button>
+          </div>
+        </div>
       </div>`;
     }).join('') +
     `<button class="btn-add-outline" onclick="prefillDate('${ds}')">+ 이 날짜에 Task 추가</button>`;
@@ -527,6 +556,25 @@ window.openDayModal = (ds, e) => {
 window.closeModal = (e) => {
   if (e.target===document.getElementById('modalOverlay'))
     document.getElementById('modalOverlay').classList.remove('show');
+};
+
+window.toggleEdit = (key, ds) => {
+  const form = document.getElementById('edit-'+key);
+  form.style.display = form.style.display==='none' ? 'block' : 'none';
+};
+
+window.saveEdit = async (key, ds) => {
+  const text     = document.getElementById('edit-text-'+key).value.trim();
+  const deadline = document.getElementById('edit-deadline-'+key).value;
+  const worker   = document.getElementById('edit-worker-'+key).value.trim();
+  const category = document.getElementById('edit-cat-'+key).value;
+  const priority = document.getElementById('edit-prio-'+key).value;
+  if (!text || !deadline) { showToast('내용과 마감일을 입력하세요', true); return; }
+  setSyncStatus('syncing');
+  await update(ref(db, 'tasks/'+key), { text, deadline, worker, category, priority });
+  setSyncStatus('connected');
+  showToast('✅ 수정됐어요!');
+  openDayModal(ds, null);
 };
 
 window.updateStatus = async (key, val, ds) => {
