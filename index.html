@@ -4,167 +4,190 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🏭 JNFAM Task Calendar</title>
-<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+KR:wght@300;400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:      #0a0e17;
-  --navy:    #111827;
-  --surface: #1a2234;
-  --surface2:#1e2a3a;
-  --border:  #1e3a5f;
-  --accent:  #00d4ff;
-  --green:   #00e676;
-  --yellow:  #ffd600;
-  --red:     #ff4444;
-  --orange:  #ff6b35;
-  --white:   #e8f4fd;
-  --dim:     #7a9bbf;
-  --muted:   #2a3a4a;
+  --bg:       #f4f6fb;
+  --white:    #ffffff;
+  --surface:  #ffffff;
+  --surface2: #f8f9fc;
+  --border:   #e4e8f0;
+  --border2:  #d0d7e8;
+  --accent:   #2563eb;
+  --accent-l: #eff4ff;
+  --green:    #16a34a;
+  --green-l:  #f0fdf4;
+  --yellow:   #d97706;
+  --yellow-l: #fffbeb;
+  --red:      #dc2626;
+  --red-l:    #fef2f2;
+  --orange:   #ea580c;
+  --cyan:     #0891b2;
+  --text:     #1e2533;
+  --text2:    #5a6478;
+  --text3:    #9aa3b5;
+  --shadow:   0 1px 3px rgba(0,0,0,.06), 0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 4px 20px rgba(0,0,0,.10), 0 12px 40px rgba(0,0,0,.08);
 }
 *{margin:0;padding:0;box-sizing:border-box;}
-body{background:var(--bg);color:var(--white);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
-body::before{content:'';position:fixed;inset:0;
-  background-image:linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);
-  background-size:40px 40px;pointer-events:none;z-index:0;}
+body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
 
 /* HEADER */
-.header{position:relative;z-index:1;background:var(--navy);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;justify-content:space-between;}
-.logo{font-family:'Bebas Neue',cursive;font-size:26px;letter-spacing:4px;color:var(--accent);text-shadow:0 0 20px rgba(0,212,255,.4);}
-.logo-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim);letter-spacing:3px;margin-top:2px;}
-.header-right{display:flex;gap:10px;align-items:center;}
-.sync-status{display:flex;align-items:center;gap:6px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);}
-.sync-dot{width:8px;height:8px;border-radius:50%;background:var(--dim);}
-.sync-dot.connected{background:var(--green);box-shadow:0 0 6px var(--green);animation:pulse 2s infinite;}
-.sync-dot.syncing{background:var(--yellow);animation:pulse .5s infinite;}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
-.today-badge{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:5px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);}
+.header{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;align-items:center;justify-content:space-between;height:60px;position:sticky;top:0;z-index:100;box-shadow:0 1px 8px rgba(0,0,0,.06);}
+.logo{display:flex;align-items:center;gap:10px;}
+.logo-mark{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+.logo-text{font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:var(--text);}
+.logo-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.header-right{display:flex;align-items:center;gap:12px;}
+.sync-badge{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);font-size:12px;color:var(--text2);}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.sync-dot.connected{background:var(--green);}
+.sync-dot.syncing{background:var(--yellow);animation:blink .5s infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.today-chip{padding:5px 12px;border-radius:20px;background:var(--accent-l);border:1px solid #bfdbfe;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--accent);font-weight:600;}
 
 /* TABS */
-.tabs{position:relative;z-index:1;display:flex;background:var(--navy);border-bottom:1px solid var(--border);padding:0 24px;overflow-x:auto;}
-.tab{padding:11px 18px;border:none;background:transparent;color:var(--dim);font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
-.tab:hover{color:var(--white);}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:700;}
+.tabs{background:var(--white);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:2px;}
+.tab{padding:13px 16px;border:none;background:transparent;color:var(--text3);font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:700;cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;white-space:nowrap;}
+.tab:hover{color:var(--text2);}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);}
 
 /* MAIN */
-.main{position:relative;z-index:1;padding:20px 24px;}
+.main{padding:24px 28px;}
 
 /* CONTROLS */
-.controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;}
-.month-nav{display:flex;align-items:center;gap:12px;}
-.nav-btn{width:34px;height:34px;border-radius:8px;background:var(--surface);border:1px solid var(--border);color:var(--white);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .2s;}
+.controls{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:14px;}
+.month-nav{display:flex;align-items:center;gap:10px;}
+.nav-btn{width:34px;height:34px;border-radius:8px;background:var(--white);border:1px solid var(--border);color:var(--text2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;box-shadow:var(--shadow);}
 .nav-btn:hover{border-color:var(--accent);color:var(--accent);}
-.month-title{font-family:'Bebas Neue',cursive;font-size:30px;letter-spacing:3px;color:var(--accent);min-width:160px;}
-.stats-row{display:flex;gap:10px;flex-wrap:wrap;}
-.stat-chip{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 11px;font-size:12px;}
+.month-title{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--text);min-width:140px;}
+.stats-row{display:flex;gap:8px;flex-wrap:wrap;}
+.stat-chip{display:flex;align-items:center;gap:6px;background:var(--white);border:1px solid var(--border);border-radius:8px;padding:6px 12px;font-size:12px;box-shadow:var(--shadow);}
 .stat-dot{width:7px;height:7px;border-radius:50%;}
+.stat-val{font-family:'IBM Plex Mono',monospace;font-weight:600;font-size:13px;}
 
 /* CALENDAR */
-.calendar{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;}
-.cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--surface2);}
-.cal-dow{padding:11px 0;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;letter-spacing:2px;border-right:1px solid var(--border);}
+.calendar{background:var(--white);border:1px solid var(--border);border-radius:14px;overflow:hidden;box-shadow:var(--shadow);}
+.cal-header{display:grid;grid-template-columns:repeat(7,1fr);background:var(--surface2);border-bottom:1px solid var(--border);}
+.cal-dow{padding:10px 0;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;letter-spacing:1px;color:var(--text3);border-right:1px solid var(--border);}
 .cal-dow:last-child{border-right:none;}
-.cal-dow.sat{color:#7cafd4;}.cal-dow.sun{color:var(--red);}
+.cal-dow.sat{color:var(--cyan);}.cal-dow.sun{color:var(--red);}
 .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);}
-.cal-day{min-height:115px;padding:7px 5px 3px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);position:relative;transition:background .15s;cursor:pointer;}
+.cal-day{min-height:110px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;}
 .cal-day:nth-child(7n){border-right:none;}
-.cal-day:hover{background:rgba(0,212,255,.04);}
-.cal-day.other-month{opacity:.25;}
-.cal-day.today{background:rgba(0,212,255,.06);box-shadow:inset 0 0 0 1px var(--accent);}
-.cal-day.sat .day-num{color:#7cafd4;}.cal-day.sun .day-num{color:var(--red);}
-.day-num{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;color:var(--white);display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-.today-label{font-size:8px;background:var(--accent);color:#000;border-radius:3px;padding:1px 4px;font-weight:700;}
-.task-chip{display:flex;align-items:center;gap:3px;padding:2px 5px;border-radius:3px;font-size:9px;margin-bottom:2px;cursor:pointer;transition:opacity .15s;border-left:2px solid transparent;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-.task-chip:hover{opacity:.75;}
-.task-chip.done  {color:var(--green); background:rgba(0,230,118,.1); border-left-color:var(--green);}
-.task-chip.inprog{color:var(--accent);background:rgba(0,212,255,.1); border-left-color:var(--accent);font-weight:700;}
-.task-chip.late  {color:var(--red);   background:rgba(255,68,68,.1);  border-left-color:var(--red);}
-.task-chip.soon  {color:var(--yellow);background:rgba(255,214,0,.1);  border-left-color:var(--yellow);}
-.task-chip.plan  {color:var(--dim);   background:rgba(122,155,191,.07);border-left-color:var(--muted);}
-.task-more{font-size:9px;color:var(--dim);padding:1px 5px;}
+.cal-day:hover{background:var(--accent-l);}
+.cal-day.other-month{background:var(--surface2);opacity:.5;}
+.cal-day.today{background:#eff4ff;box-shadow:inset 0 0 0 2px var(--accent);}
+.cal-day.sat .day-num{color:var(--cyan);}.cal-day.sun .day-num{color:var(--red);}
+.day-num{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+.today-label{font-size:9px;background:var(--accent);color:#fff;border-radius:4px;padding:1px 5px;font-weight:700;}
+.task-chip{display:flex;align-items:center;gap:3px;padding:3px 6px;border-radius:4px;font-size:10px;margin-bottom:2px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;border-left:2px solid transparent;}
+.task-chip.done  {color:var(--green); background:var(--green-l); border-left-color:var(--green);}
+.task-chip.inprog{color:var(--accent);background:var(--accent-l);border-left-color:var(--accent);}
+.task-chip.late  {color:var(--red);   background:var(--red-l);   border-left-color:var(--red);}
+.task-chip.soon  {color:var(--yellow);background:var(--yellow-l);border-left-color:var(--yellow);}
+.task-chip.plan  {color:var(--text2); background:var(--surface2);border-left-color:var(--border2);}
+.task-more{font-size:10px;color:var(--text3);padding:1px 6px;}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:100;align-items:center;justify-content:center;}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(30,37,51,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
 .modal-overlay.show{display:flex;}
-.modal{background:var(--navy);border:1px solid var(--border);border-radius:16px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.5);animation:slideUp .2s ease;}
-@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:16px;width:500px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:slideUp .18s ease;}
+@keyframes slideUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal-header{padding:18px 22px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
-.modal-date{font-family:'Bebas Neue',cursive;font-size:22px;color:var(--accent);}
-.modal-close{background:none;border:none;color:var(--dim);font-size:22px;cursor:pointer;padding:2px 8px;border-radius:6px;}
-.modal-close:hover{color:var(--white);background:var(--surface);}
+.modal-date{font-family:'IBM Plex Mono',monospace;font-size:18px;font-weight:600;color:var(--text);}
+.modal-close{background:none;border:none;color:var(--text3);font-size:22px;cursor:pointer;padding:2px 8px;border-radius:6px;line-height:1;}
+.modal-close:hover{color:var(--red);background:var(--red-l);}
 .modal-body{padding:18px 22px;}
-.modal-task-item{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:9px;position:relative;}
-.modal-task-text{font-size:14px;font-weight:500;margin-bottom:8px;}
-.modal-task-meta{display:flex;gap:7px;flex-wrap:wrap;align-items:center;}
-.meta-chip{font-size:10px;font-family:'JetBrains Mono',monospace;padding:2px 7px;border-radius:4px;background:var(--surface2);color:var(--dim);}
-.status-select{font-size:11px;font-family:'JetBrains Mono',monospace;background:var(--surface2);border:1px solid var(--border);color:var(--white);border-radius:4px;padding:3px 7px;cursor:pointer;}
+.modal-task-item{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:9px;position:relative;}
+.modal-task-text{font-size:14px;font-weight:700;margin-bottom:8px;color:var(--text);}
+.modal-task-meta{display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.meta-chip{font-size:10px;font-family:'IBM Plex Mono',monospace;padding:2px 8px;border-radius:4px;background:var(--white);border:1px solid var(--border);color:var(--text2);}
+.status-select{font-size:11px;font-family:'Noto Sans KR',sans-serif;background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:3px 8px;cursor:pointer;}
 .status-select:focus{outline:none;border-color:var(--accent);}
-.del-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--dim);cursor:pointer;font-size:16px;padding:2px 6px;border-radius:4px;}
-.del-btn:hover{color:var(--red);background:rgba(255,68,68,.1);}
+.del-btn{position:absolute;top:10px;right:10px;background:none;border:none;color:var(--text3);cursor:pointer;font-size:16px;padding:3px 7px;border-radius:5px;}
+.del-btn:hover{color:var(--red);background:var(--red-l);}
 
 /* ADD FORM */
-.add-panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:22px;max-width:580px;}
-.add-panel h3{font-size:12px;color:var(--dim);letter-spacing:2px;font-family:'JetBrains Mono',monospace;margin-bottom:18px;}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;}
+.add-panel{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:28px;max-width:600px;box-shadow:var(--shadow);}
+.add-panel h3{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text3);letter-spacing:2px;margin-bottom:22px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;}
 .form-row.single{grid-template-columns:1fr;}
-.form-label{font-size:10px;color:var(--dim);letter-spacing:1px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
-.form-input,.form-select{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--white);border-radius:6px;padding:8px 11px;font-family:'Noto Sans KR',sans-serif;font-size:13px;transition:border-color .2s;}
-.form-input:focus,.form-select:focus{outline:none;border-color:var(--accent);}
-.form-select option{background:var(--navy);}
-.btn-add{background:var(--accent);color:#000;font-weight:700;border:none;border-radius:8px;padding:10px 24px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;margin-top:4px;}
-.btn-add:hover{background:#33ddff;transform:translateY(-1px);}
-.btn-add:disabled{background:var(--muted);color:var(--dim);cursor:not-allowed;transform:none;}
+.form-label{font-size:11px;font-weight:700;color:var(--text2);margin-bottom:5px;display:block;}
+.form-input,.form-select{width:100%;background:var(--surface2);border:1.5px solid var(--border);color:var(--text);border-radius:8px;padding:9px 12px;font-family:'Noto Sans KR',sans-serif;font-size:13px;transition:border-color .15s;outline:none;}
+.form-input:focus,.form-select:focus{border-color:var(--accent);background:var(--white);}
+.btn-add{background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:8px;padding:10px 24px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;margin-top:6px;}
+.btn-add:hover{background:#1d4ed8;}
+.btn-add:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;}
+.btn-add-outline{background:var(--white);color:var(--accent);font-weight:700;border:1.5px solid var(--accent);border-radius:8px;padding:8px 18px;font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;width:100%;margin-top:8px;}
+.btn-add-outline:hover{background:var(--accent-l);}
 
 /* LIST */
-.list-header{display:grid;grid-template-columns:2fr 1fr 80px 90px 100px;gap:10px;padding:8px 14px;margin-bottom:6px;}
-.list-hdr{font-size:10px;color:var(--dim);letter-spacing:2px;font-family:'JetBrains Mono',monospace;}
-.list-item{display:grid;grid-template-columns:2fr 1fr 80px 90px 100px;gap:10px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:11px 14px;margin-bottom:5px;transition:border-color .2s;}
-.list-item:hover{border-color:rgba(0,212,255,.3);}
-.list-text{font-size:13px;}
-.list-meta{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--dim);}
-.dday{font-family:'JetBrains Mono',monospace;font-size:12px;}
-.dday.late{color:var(--red)}.dday.soon{color:var(--yellow)}.dday.ok{color:var(--dim)}.dday.done{color:var(--green)}
+.list-header{display:grid;grid-template-columns:2fr 1fr 80px 90px 100px;gap:10px;padding:8px 16px;margin-bottom:6px;}
+.list-hdr{font-size:11px;font-weight:700;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
+.list-item{display:grid;grid-template-columns:2fr 1fr 80px 90px 100px;gap:10px;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:5px;transition:border-color .15s;box-shadow:var(--shadow);}
+.list-item:hover{border-color:var(--accent);}
+.list-text{font-size:13px;font-weight:500;}
+.list-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);}
+.dday{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
+.dday.late{color:var(--red)}.dday.soon{color:var(--yellow)}.dday.ok{color:var(--text3)}.dday.done{color:var(--green)}
+
+/* FILTER ROW */
+.filter-row{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;}
+.filter-select{background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:7px 12px;font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;box-shadow:var(--shadow);}
+.filter-select:focus{outline:none;border-color:var(--accent);}
 
 /* LOADING */
-.loading{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--dim);font-family:'JetBrains Mono',monospace;font-size:13px;}
+.loading{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text3);font-size:13px;}
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg)}}
 
 /* TOAST */
-.toast{position:fixed;bottom:24px;right:24px;background:var(--green);color:#000;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;transform:translateY(60px);opacity:0;transition:all .3s;z-index:200;}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--text);color:#fff;padding:11px 18px;border-radius:10px;font-size:13px;font-weight:700;transform:translateY(60px);opacity:0;transition:all .25s;z-index:999;}
 .toast.show{transform:translateY(0);opacity:1;}
-.toast.error{background:var(--red);color:#fff;}
+.toast.error{background:var(--red);}
 
-/* FILTER ROW */
-.filter-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;}
-.filter-select{background:var(--surface);border:1px solid var(--border);color:var(--white);border-radius:6px;padding:7px 11px;font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;}
-.filter-select:focus{outline:none;border-color:var(--accent);}
+/* EMPTY */
+.empty{text-align:center;padding:48px;color:var(--text3);}
+.empty-icon{font-size:36px;margin-bottom:10px;}
+
+@media(max-width:768px){
+  .header{padding:0 16px;}
+  .main{padding:16px;}
+  .tabs{padding:0 16px;}
+  .form-row{grid-template-columns:1fr;}
+  .list-header,.list-item{grid-template-columns:1fr 80px 80px;}
+  .list-header .list-hdr:nth-child(4),.list-header .list-hdr:nth-child(5),
+  .list-item>*:nth-child(4),.list-item>*:nth-child(5){display:none;}
+  .cal-day{min-height:70px;padding:5px 3px;}
+}
 </style>
 </head>
 <body>
 
-<!-- HEADER -->
 <div class="header">
-  <div>
-    <div class="logo">JNFAM TASK CALENDAR</div>
-    <div class="logo-sub">// PRODUCTION WORK PLAN · REAL-TIME SYNC</div>
+  <div class="logo">
+    <div class="logo-mark">JN</div>
+    <div>
+      <div class="logo-text">JNFAM TASK CALENDAR</div>
+      <div class="logo-sub">생산 작업 계획 · 실시간 동기화</div>
+    </div>
   </div>
   <div class="header-right">
-    <div class="sync-status">
+    <div class="sync-badge">
       <div class="sync-dot" id="syncDot"></div>
       <span id="syncText">연결 중...</span>
     </div>
-    <div class="today-badge" id="todayBadge"></div>
+    <div class="today-chip" id="todayBadge"></div>
   </div>
 </div>
 
-<!-- TABS -->
 <div class="tabs">
   <button class="tab active" onclick="switchTab('calendar',this)">📅 달력</button>
   <button class="tab" onclick="switchTab('list',this)">📋 목록</button>
   <button class="tab" onclick="switchTab('add',this)">➕ Task 추가</button>
 </div>
 
-<!-- MAIN -->
 <div class="main">
 
   <!-- CALENDAR TAB -->
@@ -226,30 +249,30 @@ body::before{content:'';position:fixed;inset:0;
       <h3>// NEW TASK 추가</h3>
       <div class="form-row single">
         <div>
-          <div class="form-label">TASK 내용 *</div>
+          <label class="form-label">TASK 내용 *</label>
           <input class="form-input" id="inp-text" placeholder="작업 내용을 입력하세요"/>
         </div>
       </div>
       <div class="form-row">
         <div>
-          <div class="form-label">마감일 *</div>
+          <label class="form-label">마감일 *</label>
           <input class="form-input" type="date" id="inp-deadline"/>
         </div>
         <div>
-          <div class="form-label">담당자</div>
+          <label class="form-label">담당자</label>
           <input class="form-input" id="inp-worker" placeholder="이름 입력"/>
         </div>
       </div>
       <div class="form-row">
         <div>
-          <div class="form-label">카테고리</div>
+          <label class="form-label">카테고리</label>
           <select class="form-select" id="inp-cat">
             <option>생산</option><option>출하</option><option>입고</option><option>점검</option>
             <option>미팅</option><option>행정</option><option>기타</option>
           </select>
         </div>
         <div>
-          <div class="form-label">우선순위</div>
+          <label class="form-label">우선순위</label>
           <select class="form-select" id="inp-prio">
             <option>높음</option><option>보통</option><option>낮음</option>
           </select>
@@ -257,7 +280,7 @@ body::before{content:'';position:fixed;inset:0;
       </div>
       <div class="form-row single">
         <div>
-          <div class="form-label">상태</div>
+          <label class="form-label">상태</label>
           <select class="form-select" id="inp-status">
             <option>예정</option><option>진행중</option><option>완료</option><option>보류</option>
           </select>
@@ -282,13 +305,11 @@ body::before{content:'';position:fixed;inset:0;
 
 <div class="toast" id="toast"></div>
 
-<!-- FIREBASE SDK -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getDatabase, ref, onValue, push, update, remove, set }
+import { getDatabase, ref, onValue, push, update, remove }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
-// ── Firebase 설정 ───────────────────────────────────
 const firebaseConfig = {
   apiKey:            "AIzaSyBkY5IGIPC0CsJB55hui7wqCffcCiS33NI",
   authDomain:        "jnfam-task-plan.firebaseapp.com",
@@ -304,19 +325,16 @@ const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const tasksRef = ref(db, 'tasks');
 
-// ── 전역 상태 ───────────────────────────────────────
-let tasks = {};   // { firebaseKey: taskObj }
+let tasks = {};
 let curYear  = new Date().getFullYear();
-let curMonth = new Date().getMonth(); // 0-indexed
+let curMonth = new Date().getMonth();
 
 const today = new Date();
 today.setHours(0,0,0,0);
 
-// ── TODAY 배지 ───────────────────────────────────────
 document.getElementById('todayBadge').textContent =
   today.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'});
 
-// ── 동기화 상태 ──────────────────────────────────────
 function setSyncStatus(state) {
   const dot  = document.getElementById('syncDot');
   const text = document.getElementById('syncText');
@@ -326,19 +344,16 @@ function setSyncStatus(state) {
   if (state==='')          text.textContent = '연결 끊김';
 }
 
-// ── Firebase 실시간 리스너 ────────────────────────────
 onValue(tasksRef, (snapshot) => {
   tasks = snapshot.val() || {};
   setSyncStatus('connected');
   renderCalendar();
-  const activeList = document.getElementById('tab-list');
-  if (activeList.style.display !== 'none') renderList();
+  if (document.getElementById('tab-list').style.display !== 'none') renderList();
 }, (error) => {
   setSyncStatus('');
   showToast('연결 오류: ' + error.message, true);
 });
 
-// ── 유틸 ─────────────────────────────────────────────
 function toDate(str) {
   const d = new Date(str + 'T00:00:00');
   d.setHours(0,0,0,0);
@@ -370,7 +385,6 @@ function showToast(msg, isError=false) {
   setTimeout(()=>t.className='toast', 2500);
 }
 
-// ── 탭 전환 ──────────────────────────────────────────
 window.switchTab = (name, btn) => {
   ['calendar','list','add'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name?'block':'none';
@@ -380,7 +394,6 @@ window.switchTab = (name, btn) => {
   if (name==='list') renderList();
 };
 
-// ── 월 이동 ──────────────────────────────────────────
 window.changeMonth = (d) => {
   curMonth += d;
   if (curMonth > 11) { curMonth=0; curYear++; }
@@ -388,10 +401,9 @@ window.changeMonth = (d) => {
   renderCalendar();
 };
 
-// ── 달력 렌더 ─────────────────────────────────────────
 function renderCalendar() {
   const MO = ['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
-  document.getElementById('monthTitle').textContent = `${curYear}  ${MO[curMonth]}`;
+  document.getElementById('monthTitle').textContent = `${curYear}년 ${MO[curMonth]}`;
 
   const first = new Date(curYear, curMonth, 1);
   let startDow = first.getDay();
@@ -399,7 +411,6 @@ function renderCalendar() {
   const calStart = new Date(first);
   calStart.setDate(calStart.getDate()-startDow);
 
-  // 이달 Task 날짜별 그룹핑
   const byDate = {};
   const taskList = Object.entries(tasks);
   taskList.forEach(([key, t]) => {
@@ -411,7 +422,6 @@ function renderCalendar() {
     }
   });
 
-  // 집계
   const mTasks = taskList.filter(([,t])=>t&&t.deadline&&t.deadline.startsWith(`${curYear}-${String(curMonth+1).padStart(2,'0')}`)).map(([,t])=>t);
   const total   = mTasks.length;
   const done    = mTasks.filter(t=>t.status==='완료').length;
@@ -419,16 +429,15 @@ function renderCalendar() {
   const delayed = mTasks.filter(t=>t.status!=='완료'&&diffDays(t.deadline)<0).length;
 
   document.getElementById('statsRow').innerHTML = [
-    {l:'전체', v:total,   c:'var(--white)'},
-    {l:'완료', v:done,    c:'var(--green)'},
-    {l:'진행', v:inprog,  c:'var(--accent)'},
-    {l:'지연', v:delayed, c:'var(--red)'},
-    {l:'완료율',v:total?Math.round(done/total*100)+'%':'-',c:'var(--green)'},
+    {l:'전체',  v:total,   c:'var(--text)',   bg:'var(--surface2)'},
+    {l:'완료',  v:done,    c:'var(--green)',  bg:'var(--green-l)'},
+    {l:'진행',  v:inprog,  c:'var(--accent)', bg:'var(--accent-l)'},
+    {l:'지연',  v:delayed, c:'var(--red)',    bg:'var(--red-l)'},
+    {l:'완료율',v:total?Math.round(done/total*100)+'%':'-', c:'var(--green)', bg:'var(--green-l)'},
   ].map(s=>`
-    <div class="stat-chip">
-      <div class="stat-dot" style="background:${s.c}"></div>
-      <span style="color:var(--dim);font-size:11px">${s.l}</span>
-      <span style="font-family:'JetBrains Mono',monospace;font-weight:700;color:${s.c}">${s.v}</span>
+    <div class="stat-chip" style="background:${s.bg}">
+      <span style="color:var(--text3);font-size:11px">${s.l}</span>
+      <span class="stat-val" style="color:${s.c}">${s.v}</span>
     </div>`).join('');
 
   const grid = document.getElementById('calGrid');
@@ -449,12 +458,12 @@ function renderCalendar() {
     if (isSat)    cls+=' sat';
     if (isSun)    cls+=' sun';
 
-    const MAX=5;
+    const MAX=4;
     const chips = dayTasks.slice(0,MAX).map(t=>
       `<div class="task-chip ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
         ${taskPrefix(t)} ${t.text}
       </div>`).join('');
-    const more = dayTasks.length>MAX ? `<div class="task-more">+${dayTasks.length-MAX} more</div>` : '';
+    const more = dayTasks.length>MAX ? `<div class="task-more">+${dayTasks.length-MAX}개 더</div>` : '';
 
     const cell = document.createElement('div');
     cell.className = cls;
@@ -472,7 +481,6 @@ function renderCalendar() {
   }
 }
 
-// ── 날짜 모달 ─────────────────────────────────────────
 window.openDayModal = (ds, e) => {
   if (e) e.stopPropagation();
   const d = new Date(ds+'T00:00:00');
@@ -486,31 +494,32 @@ window.openDayModal = (ds, e) => {
   const body = document.getElementById('modalBody');
   if (dayTasks.length===0) {
     body.innerHTML = `
-      <div style="text-align:center;padding:28px;color:var(--dim)">
-        <div style="font-size:28px;margin-bottom:8px">📋</div>
+      <div class="empty">
+        <div class="empty-icon">📋</div>
         <div>이 날짜에 Task가 없습니다</div>
       </div>
-      <button class="btn-add" style="width:100%;margin-top:8px" onclick="prefillDate('${ds}')">+ 이 날짜에 Task 추가</button>`;
+      <button class="btn-add-outline" onclick="prefillDate('${ds}')">+ 이 날짜에 Task 추가</button>`;
   } else {
     body.innerHTML = dayTasks.map(t => {
       const dd = diffDays(t.deadline);
       const ddTxt = t.status==='완료'?'완료됨':(dd<0?`${-dd}일 지연`:`D-${dd}`);
+      const ddColor = t.status==='완료'?'var(--green)':(dd<0?'var(--red)':'var(--text2)');
       return `
       <div class="modal-task-item">
         <button class="del-btn" onclick="deleteTask('${t._key}','${ds}')" title="삭제">×</button>
         <div class="modal-task-text">${t.text}</div>
         <div class="modal-task-meta">
           ${t.category?`<span class="meta-chip">${t.category}</span>`:''}
-          ${t.worker?`<span class="meta-chip">${t.worker}</span>`:''}
+          ${t.worker?`<span class="meta-chip">👤 ${t.worker}</span>`:''}
           ${t.priority?`<span class="meta-chip">${t.priority}</span>`:''}
-          <span class="meta-chip" style="color:${dd<0&&t.status!=='완료'?'var(--red)':'var(--dim)'}">${ddTxt}</span>
+          <span class="meta-chip" style="color:${ddColor}">${ddTxt}</span>
           <select class="status-select" onchange="updateStatus('${t._key}',this.value,'${ds}')">
             ${['예정','진행중','완료','보류'].map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('')}
           </select>
         </div>
       </div>`;
     }).join('') +
-    `<button class="btn-add" style="width:100%;margin-top:4px" onclick="prefillDate('${ds}')">+ 이 날짜에 Task 추가</button>`;
+    `<button class="btn-add-outline" onclick="prefillDate('${ds}')">+ 이 날짜에 Task 추가</button>`;
   }
   document.getElementById('modalOverlay').classList.add('show');
 };
@@ -520,7 +529,6 @@ window.closeModal = (e) => {
     document.getElementById('modalOverlay').classList.remove('show');
 };
 
-// ── 상태 업데이트 ────────────────────────────────────
 window.updateStatus = async (key, val, ds) => {
   setSyncStatus('syncing');
   await update(ref(db, 'tasks/'+key), {status: val});
@@ -529,7 +537,6 @@ window.updateStatus = async (key, val, ds) => {
   openDayModal(ds, null);
 };
 
-// ── Task 삭제 ─────────────────────────────────────────
 window.deleteTask = async (key, ds) => {
   if (!confirm('이 Task를 삭제할까요?')) return;
   setSyncStatus('syncing');
@@ -539,7 +546,6 @@ window.deleteTask = async (key, ds) => {
   openDayModal(ds, null);
 };
 
-// ── Task 추가 ─────────────────────────────────────────
 window.addTask = async () => {
   const text = document.getElementById('inp-text').value.trim();
   const dl   = document.getElementById('inp-deadline').value;
@@ -560,20 +566,17 @@ window.addTask = async () => {
   document.getElementById('inp-text').value='';
   document.getElementById('inp-worker').value='';
   showToast('✓ Task가 추가되었습니다!');
-  // 해당 월로 이동
   const [y,m] = dl.split('-').map(Number);
   curYear=y; curMonth=m-1;
   switchTab('calendar', document.querySelectorAll('.tab')[0]);
 };
 
-// ── 날짜 미리채우기 ──────────────────────────────────
 window.prefillDate = (ds) => {
   document.getElementById('modalOverlay').classList.remove('show');
   document.getElementById('inp-deadline').value = ds;
   switchTab('add', document.querySelectorAll('.tab')[2]);
 };
 
-// ── 목록 렌더 ────────────────────────────────────────
 function renderList() {
   const fs = document.getElementById('filterStatus').value;
   const fm = document.getElementById('filterMonth').value;
@@ -613,7 +616,7 @@ function renderList() {
           </select>
         </div>
       </div>`).join('')
-    : '<div style="text-align:center;padding:40px;color:var(--dim)">Task가 없습니다</div>';
+    : '<div class="empty"><div class="empty-icon">📭</div><div>Task가 없습니다</div></div>';
 }
 
 window.updateStatusList = async (key, val) => {
@@ -623,10 +626,8 @@ window.updateStatusList = async (key, val) => {
   showToast('✓ 상태 업데이트됨');
 };
 
-// ── 초기 데이터 (첫 실행 시 샘플 데이터 입력) ─────────
 onValue(tasksRef, async (snap) => {
   if (!snap.exists()) {
-    // 샘플 Task 초기 입력
     const samples = [
       {text:"HCL/HF/HNO3 Water run & Cleaning",deadline:"2026-05-06",status:"예정",worker:"작업자1",category:"점검",priority:"높음"},
       {text:"설비 점검",deadline:"2026-05-07",status:"예정",worker:"작업자1",category:"점검",priority:"보통"},
@@ -643,7 +644,6 @@ onValue(tasksRef, async (snap) => {
     }
   }
 }, {onlyOnce: true});
-
 </script>
 </body>
 </html>
