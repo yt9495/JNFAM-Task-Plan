@@ -445,11 +445,8 @@ function renderCalendar() {
   const taskList = Object.entries(tasks);
   taskList.forEach(([key, t]) => {
     if (!t || !t.deadline) return;
-    const mo = `${curYear}-${String(curMonth+1).padStart(2,'0')}`;
-    if (t.deadline.startsWith(mo)) {
-      if (!byDate[t.deadline]) byDate[t.deadline] = [];
-      byDate[t.deadline].push({...t, _key: key});
-    }
+    if (!byDate[t.deadline]) byDate[t.deadline] = [];
+    byDate[t.deadline].push({...t, _key: key});
   });
 
   const mTasks = taskList.filter(([,t])=>t&&t.deadline&&t.deadline.startsWith(`${curYear}-${String(curMonth+1).padStart(2,'0')}`)).map(([,t])=>t);
@@ -473,11 +470,10 @@ function renderCalendar() {
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
 
-  // 월~금 + 주말(토+일 합친 칸) 구조로 렌더링
-  // calStart는 월요일 기준
-  const weeksNeeded = 6;
-  for (let week=0; week<weeksNeeded; week++) {
-    // 월~금 (5칸)
+  // calStart(월요일)부터 6주치를 순서대로 날짜 iterate
+  // 토/일은 하나의 주말 칸으로 합침 → 주당 6칸 출력
+  for (let week=0; week<6; week++) {
+    // 월~금 (5칸) — calStart+0~4, +7~11, ...
     for (let wd=0; wd<5; wd++) {
       const d = new Date(calStart);
       d.setDate(d.getDate() + week*7 + wd);
@@ -495,7 +491,7 @@ function renderCalendar() {
         `<div class="task-chip ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
           ${taskPrefix(t)} ${t.text}
         </div>`).join('');
-      const more = dayTasks.length>MAX ? `<div class="task-more">+${dayTasks.length-MAX}개 더</div>` : '';
+      const more = dayTasks.length>MAX?`<div class="task-more">+${dayTasks.length-MAX}개 더</div>`:'';
 
       const cell = document.createElement('div');
       cell.className = cls;
@@ -511,37 +507,32 @@ function renderCalendar() {
       grid.appendChild(cell);
     }
 
-    // 주말 합칩 칸 (토+일)
+    // 주말 합친 칸: calStart+5=토, calStart+6=일
     const sat = new Date(calStart);
-    sat.setDate(sat.getDate() + week*7 + 5); // 토요일
+    sat.setDate(sat.getDate() + week*7 + 5);
     const sun = new Date(calStart);
-    sun.setDate(sun.getDate() + week*7 + 6); // 일요일
+    sun.setDate(sun.getDate() + week*7 + 6);
 
     const satDs = sat.toISOString().slice(0,10);
     const sunDs = sun.toISOString().slice(0,10);
     const satTasks = byDate[satDs]||[];
     const sunTasks = byDate[sunDs]||[];
-    const satInMonth = sat.getMonth()===curMonth && sat.getFullYear()===curYear;
-    const sunInMonth = sun.getMonth()===curMonth && sun.getFullYear()===curYear;
-    const inMonth = satInMonth || sunInMonth;
+    const inMonth = (sat.getMonth()===curMonth)||(sun.getMonth()===curMonth);
 
-    const wkndCell = document.createElement('div');
-    wkndCell.className = 'cal-day weekend-cell' + (inMonth?'':' other-month');
-
-    const renderWkndDay = (d, ds, tasks, label) => {
-      const isToday2 = d.getTime()===today.getTime();
-      const chips = tasks.slice(0,2).map(t=>
-        `<div class="task-chip weekend ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
+    const renderWkndDay = (d, ds, dayTasks, label) => {
+      const isT = d.getTime()===today.getTime();
+      const chips = dayTasks.slice(0,2).map(t=>
+        `<div class="task-chip ${taskClass(t)}" style="font-size:9px;padding:2px 4px" onclick="openDayModal('${ds}',event)">
           ${taskPrefix(t)} ${t.text}
         </div>`).join('');
-      const more = tasks.length>2?`<div class="task-more">+${tasks.length-2}</div>`:'';
-      return `<div class="weekend-day-label">${label} ${d.getDate()}${isToday2?' <span class="today-label">TODAY</span>':''}</div>${chips}${more}`;
+      const more = dayTasks.length>2?`<div class="task-more">+${dayTasks.length-2}</div>`:'';
+      return `<div class="weekend-day-label">${label} ${d.getDate()}${isT?' <span class="today-label">TODAY</span>':''}</div>${chips}${more}`;
     };
 
-    wkndCell.innerHTML =
-      renderWkndDay(sat, satDs, satTasks, '토') +
-      renderWkndDay(sun, sunDs, sunTasks, '일');
-    grid.appendChild(wkndCell);
+    const wknd = document.createElement('div');
+    wknd.className = 'cal-day weekend-cell'+(inMonth?'':' other-month');
+    wknd.innerHTML = renderWkndDay(sat,satDs,satTasks,'토') + renderWkndDay(sun,sunDs,sunTasks,'일');
+    grid.appendChild(wknd);
   }
 }
 
