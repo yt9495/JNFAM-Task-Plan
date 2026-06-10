@@ -135,6 +135,27 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .btn-add{background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:8px;padding:10px 24px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;margin-top:6px;}
 .btn-add:hover{background:#1d4ed8;}
 .btn-add:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;}
+.btn-import{background:#059669;color:#fff;font-weight:700;border:none;border-radius:8px;padding:10px 20px;font-family:'Noto Sans KR',sans-serif;font-size:13px;cursor:pointer;transition:all .15s;margin-top:6px;margin-left:8px;}
+.btn-import:hover{background:#047857;}
+.import-modal{display:none;position:fixed;inset:0;background:rgba(30,37,51,.5);z-index:300;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
+.import-modal.open{display:flex;}
+.import-box{background:var(--white);border-radius:16px;padding:28px 32px;width:600px;max-width:95vw;max-height:85vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.18);}
+.import-box h3{font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.import-desc{font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.6;}
+.import-textarea{width:100%;min-height:160px;border:1.5px solid var(--border);border-radius:8px;padding:10px 12px;font-family:'IBM Plex Mono',monospace;font-size:12px;resize:vertical;box-sizing:border-box;color:var(--text);}
+.import-preview{margin-top:16px;background:var(--bg);border-radius:10px;padding:14px;max-height:220px;overflow-y:auto;}
+.import-preview-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);}
+.import-preview-item:last-child{border-bottom:none;}
+.import-tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;}
+.tag-hf{background:#dbeafe;color:#1d4ed8;}
+.tag-hcl{background:#fce7f3;color:#be185d;}
+.tag-hno3{background:#fef3c7;color:#b45309;}
+.import-btn-row{display:flex;gap:10px;margin-top:18px;justify-content:flex-end;}
+.btn-confirm-import{background:var(--accent);color:#fff;font-weight:700;border:none;border-radius:8px;padding:10px 24px;font-size:13px;cursor:pointer;}
+.btn-confirm-import:hover{background:#1d4ed8;}
+.btn-confirm-import:disabled{background:var(--border2);color:var(--text3);cursor:not-allowed;}
+.btn-cancel-import{background:var(--bg);color:var(--text2);font-weight:600;border:1.5px solid var(--border);border-radius:8px;padding:10px 20px;font-size:13px;cursor:pointer;}
+.btn-cancel-import:hover{background:var(--border);}
 .btn-add-outline{background:var(--white);color:var(--accent);font-weight:700;border:1.5px solid var(--accent);border-radius:8px;padding:8px 18px;font-family:'Noto Sans KR',sans-serif;font-size:12px;cursor:pointer;transition:all .15s;width:100%;margin-top:8px;}
 .btn-add-outline:hover{background:var(--accent-l);}
 
@@ -317,9 +338,32 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
         </div>
       </div>
       <button class="btn-add" id="addBtn" onclick="addTask()">+ Task 추가</button>
+      <button class="btn-import" id="importBtn" onclick="openImportModal()">📋 고객 스케줄 Import</button>
     </div>
   </div>
 
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="import-modal" id="importModal">
+  <div class="import-box">
+    <h3>📋 고객 스케줄 Import</h3>
+    <p class="import-desc">
+      고객 구글 시트의 스케줄을 아래 형식으로 붙여넣으세요.<br>
+      <b>형식:</b> <code>YYYY-MM-DD, 품목(HF/HCl/HNO3), 수량(lb), 시간(선택)</code><br>
+      예시: <code>2026-06-01, HF, 35998, 09AM</code><br>
+      여러 줄 입력 가능 / 납품일 기준으로 출하 Task가 생성됩니다.
+    </p>
+    <textarea class="import-textarea" id="importInput" placeholder="2026-06-01, HF, 35998, 09AM&#10;2026-06-03, HF, 17999, 09AM&#10;2026-06-08, HF, 17999, 09AM&#10;2026-06-25, HCl, 17999, 08AM" oninput="previewImport()"></textarea>
+    <div class="import-preview" id="importPreview" style="display:none">
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">미리보기</div>
+      <div id="importPreviewList"></div>
+    </div>
+    <div class="import-btn-row">
+      <button class="btn-cancel-import" onclick="closeImportModal()">취소</button>
+      <button class="btn-confirm-import" id="importConfirmBtn" onclick="confirmImport()" disabled>Firebase에 저장</button>
+    </div>
+  </div>
 </div>
 
 <!-- DAY MODAL -->
@@ -822,6 +866,103 @@ window.updateStatusList = async (key, val) => {
   setSyncStatus('connected');
   showToast('✓ 상태 업데이트됨');
 };
+
+// ── CUSTOMER SCHEDULE IMPORT ──────────────────────────────────────────
+let importParsed = [];
+
+window.openImportModal = () => {
+  // 현재 보고 있는 월의 기본 예시 자동 세팅 (June 2026 데이터)
+  const defaultData = [
+    '2026-06-01, HF, 35998, 09AM',
+    '2026-06-03, HF, 17999, 09AM',
+    '2026-06-08, HF, 17999, 09AM',
+    '2026-06-15, HF, 17999, 09AM',
+    '2026-06-22, HF, 17999, 09AM',
+    '2026-06-25, HCl, 17999, 08AM',
+  ].join('\n');
+  document.getElementById('importInput').value = defaultData;
+  document.getElementById('importModal').classList.add('open');
+  previewImport();
+};
+
+window.closeImportModal = () => {
+  document.getElementById('importModal').classList.remove('open');
+  document.getElementById('importPreview').style.display = 'none';
+  importParsed = [];
+};
+
+window.previewImport = () => {
+  const raw = document.getElementById('importInput').value.trim();
+  const lines = raw.split('\n').filter(l => l.trim());
+  importParsed = [];
+
+  const tagClass = { HF: 'tag-hf', HCl: 'tag-hcl', HCL: 'tag-hcl', HNO3: 'tag-hno3' };
+
+  for (const line of lines) {
+    const parts = line.split(',').map(s => s.trim());
+    if (parts.length < 2) continue;
+    const [date, chem, qty, time] = parts;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
+    const chemUpper = chem.toUpperCase().replace('HCL','HCl');
+    if (!['HF','HCl','HNO3'].includes(chemUpper)) continue;
+    const qtyNum = qty ? parseInt(qty.replace(/,/g,'')) : null;
+    const timeStr = time || '';
+    importParsed.push({ date, chem: chemUpper, qty: qtyNum, time: timeStr });
+  }
+
+  const previewDiv = document.getElementById('importPreview');
+  const listDiv = document.getElementById('importPreviewList');
+
+  if (importParsed.length === 0) {
+    previewDiv.style.display = 'none';
+    document.getElementById('importConfirmBtn').disabled = true;
+    return;
+  }
+
+  listDiv.innerHTML = importParsed.map(item => {
+    const tc = tagClass[item.chem] || 'tag-hf';
+    const qtyTxt = item.qty ? ` — ${item.qty.toLocaleString()} lb` : '';
+    const timeTxt = item.time ? ` (${item.time})` : '';
+    return `<div class="import-preview-item">
+      <span>${item.date}</span>
+      <span class="import-tag ${tc}">${item.chem}</span>
+      <span style="color:var(--text2)">${item.chem} 출하${qtyTxt}${timeTxt}</span>
+    </div>`;
+  }).join('');
+
+  previewDiv.style.display = 'block';
+  document.getElementById('importConfirmBtn').disabled = false;
+};
+
+window.confirmImport = async () => {
+  if (importParsed.length === 0) return;
+  const btn = document.getElementById('importConfirmBtn');
+  btn.disabled = true;
+  btn.textContent = '저장 중...';
+  setSyncStatus('syncing');
+
+  let count = 0;
+  for (const item of importParsed) {
+    const timeTxt = item.time ? ` ${item.time}` : '';
+    const qtyTxt = item.qty ? ` (${item.qty.toLocaleString()} lb)` : '';
+    await push(tasksRef, {
+      text: `${item.chem} 출하${qtyTxt}${timeTxt}`,
+      deadline: item.date,
+      worker: '',
+      category: '출하',
+      priority: '높음',
+      status: '예정',
+      createdAt: new Date().toISOString(),
+    });
+    count++;
+  }
+
+  setSyncStatus('connected');
+  showToast(`✓ ${count}개 Task가 추가되었습니다`);
+  closeImportModal();
+  btn.textContent = 'Firebase에 저장';
+};
+// ── END IMPORT ────────────────────────────────────────────────────────
 
 onValue(tasksRef, async (snap) => {
   if (!snap.exists()) {
