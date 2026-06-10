@@ -904,7 +904,20 @@ async function findCurrentMonthGid(sheetId) {
   return { gid: '0', tabName: '' };
 }
 
-function parseSheetCsv(csv, year, month) {
+function parseSheetCsv(csv) {
+  // CSV 첫 줄에서 년/월 자동 감지 ("June 2026", "July 2026" 등)
+  const monthNames = ['january','february','march','april','may','june',
+                      'july','august','september','october','november','december'];
+  let year = new Date().getFullYear();
+  let month = new Date().getMonth() + 1; // fallback: 현재 월
+
+  const firstLine = csv.split('\n')[0] || '';
+  for (let mi = 0; mi < monthNames.length; mi++) {
+    const re = new RegExp(monthNames[mi] + '\\s+(\\d{4})', 'i');
+    const m = firstLine.match(re);
+    if (m) { month = mi + 1; year = parseInt(m[1]); break; }
+  }
+
   // CSV를 올바르게 파싱 (셀 내 줄바꿈 처리)
   function parseCsvRows(text) {
     const rows = [];
@@ -1072,7 +1085,7 @@ window.fetchSheet = async () => {
     const csv = await res.text();
 
     const now = new Date();
-    importParsed = parseSheetCsv(csv, now.getFullYear(), now.getMonth()+1);
+    importParsed = parseSheetCsv(csv);
 
     if (importParsed.length === 0) {
       statusEl.textContent = '⚠️ HF / HCl / HNO3 출하 일정을 찾지 못했습니다. 시트 탭을 직접 선택 후 URL을 다시 붙여넣어 보세요.';
