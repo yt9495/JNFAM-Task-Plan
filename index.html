@@ -349,12 +349,14 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <div class="import-box">
     <h3>📋 고객 스케줄 Import</h3>
     <p class="import-desc">
-      고객 구글 시트의 스케줄을 아래 형식으로 붙여넣으세요.<br>
-      <b>형식:</b> <code>YYYY-MM-DD, 품목(HF/HCl/HNO3), 수량(lb), 시간(선택)</code><br>
-      예시: <code>2026-06-01, HF, 35998, 09AM</code><br>
-      여러 줄 입력 가능 / 납품일 기준으로 출하 Task가 생성됩니다.
+      고객 구글 시트 URL을 붙여넣으면 <b>현재 월 탭</b>을 자동으로 읽어 HF / HCl / HNO3 출하 일정을 생성합니다.<br>
+      시트가 <b>"링크가 있는 모든 사용자 — 뷰어"</b> 공개 상태여야 합니다.
     </p>
-    <textarea class="import-textarea" id="importInput" placeholder="2026-06-01, HF, 35998, 09AM&#10;2026-06-03, HF, 17999, 09AM&#10;2026-06-08, HF, 17999, 09AM&#10;2026-06-25, HCl, 17999, 08AM" oninput="previewImport()"></textarea>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <input class="form-input" id="sheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." style="flex:1;font-size:12px;"/>
+      <button class="btn-add" id="fetchSheetBtn" onclick="fetchSheet()" style="margin-top:0;white-space:nowrap;">불러오기</button>
+    </div>
+    <div id="importStatus" style="font-size:12px;color:var(--text2);margin-top:8px;min-height:18px;"></div>
     <div class="import-preview" id="importPreview" style="display:none">
       <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">미리보기</div>
       <div id="importPreviewList"></div>
@@ -870,19 +872,133 @@ window.updateStatusList = async (key, val) => {
 // ── CUSTOMER SCHEDULE IMPORT ──────────────────────────────────────────
 let importParsed = [];
 
+function extractSheetId(url) {
+  const m = url.match(/spreadsheets\/d\/([a-zA-Z0-9_-]+)/);
+  return m ? m[1] : null;
+}
+
+function sheetCsvUrl(sheetId, gid) {
+  return `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`;
+}
+
+async function findCurrentMonthGid(sheetId) {
+  const now = new Date();
+  const monthAbbrs = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  const shortMonth = monthAbbrs[now.getMonth()];
+  try {
+    const res = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/edit`);
+    const text = await res.text();
+    // 탭 이름과 gid 추출
+    const matches = [...text.matchAll(/"([^"]*(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[^"]*)"\s*,\s*null\s*,\s*(\d+)/gi)];
+    for (const m of matches) {
+      if (m[1].toLowerCase().includes(shortMonth)) {
+        return { gid: m[2], tabName: m[1] };
+      }
+    }
+    // fallback: gid 패턴 다시 시도
+    const re2 = new RegExp(`"([^"]*${shortMonth}[^"]*)"[^\\[\\]]{0,80}(\\d{6,})`, 'gi');
+    const m2 = re2.exec(text);
+    if (m2) return { gid: m2[2], tabName: m2[1] };
+  } catch(e) {}
+  return { gid: '0', tabName: '' };
+}
+
+function parseSheetCsv(csv, year, month) {
+  const lines = csv.split('\n');
+  const results = [];
+
+  // 수량 테이블 파싱 (Week 행)
+  const weekQty = {};
+  let weekColNums = [];
+  let weekColIndices = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const cells = lines[i].split(',').map(c => c.replace(/"/g,'').trim());
+    // Week 헤더 행 찾기
+    if (cells.some(c => c === 'Week')) {
+      weekColIndices = [];
+      weekColNums = [];
+      cells.forEach((c, idx) => {
+        if (/^\d{2}$/.test(c)) { weekColNums.push(c); weekColIndices.push(idx); }
+      });
+    }
+    // 화학물질 수량 행
+    const firstCell = cells[0] || cells[1] || '';
+    const chemKey = ['HF','HCl','HCL','HNO3'].find(k => firstCell.toUpperCase().startsWith(k.toUpperCase()));
+    if (chemKey && weekColNums.length > 0) {
+      const normChem = chemKey.toUpperCase() === 'HCL' ? 'HCl' : chemKey;
+      weekQty[normChem] = weekQty[normChem] || {};
+      weekColIndices.forEach((colIdx, n) => {
+        const qty = parseInt((cells[colIdx]||'').replace(/,/g,''));
+        if (!isNaN(qty) && qty > 0) weekQty[normChem][weekColNums[n]] = qty;
+      });
+    }
+  }
+
+  // 달력 파싱: 날짜 행 + 내용 행 세트
+  let currentWeek = null;
+  for (let i = 0; i < lines.length - 1; i++) {
+    const cells = lines[i].split(',').map(c => c.replace(/"/g,'').trim());
+    // 주차 감지 (첫 컬럼 2자리 숫자)
+    if (/^\d{2}$/.test(cells[0])) currentWeek = cells[0];
+
+    // 날짜 행 감지: 1~31 숫자 4개 이상
+    const hasDays = cells.filter(c => /^\d{1,2}$/.test(c) && +c >= 1 && +c <= 31).length >= 4;
+    if (!hasDays) continue;
+
+    const contentCells = lines[i+1].split(',').map(c => c.replace(/"/g,'').trim());
+
+    cells.forEach((cell, colIdx) => {
+      const day = parseInt(cell);
+      if (isNaN(day) || day < 1 || day > 31) return;
+      const content = contentCells[colIdx] || '';
+      if (!content) return;
+
+      const chems = [];
+      if (/\bHF\b/i.test(content)) chems.push('HF');
+      if (/\bHCL?\b/i.test(content)) chems.push('HCl');
+      if (/\bHNO3\b/i.test(content)) chems.push('HNO3');
+      if (chems.length === 0) return;
+
+      // 날짜 유효성
+      const dateObj = new Date(year, month-1, day);
+      if (dateObj.getMonth() !== month-1) return;
+      const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+
+      for (const chem of chems) {
+        // 시간 추출 (화학물질 앞)
+        const tRe = new RegExp(`(\\d{2,4}(?:AM|PM))\\s*${chem}`, 'i');
+        const tMatch = content.match(tRe) || content.match(/(\d{2,4}(?:AM|PM))/i);
+        const time = tMatch ? tMatch[1].replace(/^0(\d)(?=AM|PM)/i,'$1') : '';
+
+        // 수량: 주차 수량 / 해당 주 납품 횟수
+        const wq = weekQty[chem] && currentWeek ? weekQty[chem][currentWeek] : null;
+        results.push({ date: dateStr, chem, qty: wq || null, time, week: currentWeek });
+      }
+    });
+  }
+
+  // 수량 배분: 같은 주/같은 화학물질이면 균등 배분
+  const grouped = {};
+  results.forEach(r => {
+    const key = `${r.week}_${r.chem}`;
+    grouped[key] = (grouped[key]||0) + 1;
+  });
+  return results.map(r => {
+    const key = `${r.week}_${r.chem}`;
+    const cnt = grouped[key] || 1;
+    return { ...r, qty: r.qty ? Math.round(r.qty / cnt) : null };
+  });
+}
+
 window.openImportModal = () => {
-  // 현재 보고 있는 월의 기본 예시 자동 세팅 (June 2026 데이터)
-  const defaultData = [
-    '2026-06-01, HF, 35998, 09AM',
-    '2026-06-03, HF, 17999, 09AM',
-    '2026-06-08, HF, 17999, 09AM',
-    '2026-06-15, HF, 17999, 09AM',
-    '2026-06-22, HF, 17999, 09AM',
-    '2026-06-25, HCl, 17999, 08AM',
-  ].join('\n');
-  document.getElementById('importInput').value = defaultData;
+  const saved = localStorage.getItem('jnfam_sheet_url') || '';
+  document.getElementById('sheetUrlInput').value = saved;
+  document.getElementById('importStatus').textContent = saved ? '저장된 URL이 있습니다. 불러오기를 눌러주세요.' : '';
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importConfirmBtn').disabled = true;
+  importParsed = [];
   document.getElementById('importModal').classList.add('open');
-  previewImport();
 };
 
 window.closeImportModal = () => {
@@ -891,72 +1007,99 @@ window.closeImportModal = () => {
   importParsed = [];
 };
 
-window.previewImport = () => {
-  const raw = document.getElementById('importInput').value.trim();
-  const lines = raw.split('\n').filter(l => l.trim());
+window.fetchSheet = async () => {
+  const url = document.getElementById('sheetUrlInput').value.trim();
+  const statusEl = document.getElementById('importStatus');
+  const btn = document.getElementById('fetchSheetBtn');
+  if (!url) { statusEl.textContent = '⚠️ URL을 입력해주세요.'; return; }
+  const sheetId = extractSheetId(url);
+  if (!sheetId) { statusEl.textContent = '⚠️ 올바른 구글 시트 URL이 아닙니다.'; return; }
+
+  localStorage.setItem('jnfam_sheet_url', url);
+  btn.disabled = true; btn.textContent = '읽는 중...';
+  statusEl.textContent = '⏳ 현재 월 탭 탐색 중...';
   importParsed = [];
+  document.getElementById('importPreview').style.display = 'none';
+  document.getElementById('importConfirmBtn').disabled = true;
 
-  const tagClass = { HF: 'tag-hf', HCl: 'tag-hcl', HCL: 'tag-hcl', HNO3: 'tag-hno3' };
+  try {
+    const gidMatch = url.match(/gid=(\d+)/);
+    let gid = gidMatch ? gidMatch[1] : null;
+    let tabName = '';
 
-  for (const line of lines) {
-    const parts = line.split(',').map(s => s.trim());
-    if (parts.length < 2) continue;
-    const [date, chem, qty, time] = parts;
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) continue;
-    const chemUpper = chem.toUpperCase().replace('HCL','HCl');
-    if (!['HF','HCl','HNO3'].includes(chemUpper)) continue;
-    const qtyNum = qty ? parseInt(qty.replace(/,/g,'')) : null;
-    const timeStr = time || '';
-    importParsed.push({ date, chem: chemUpper, qty: qtyNum, time: timeStr });
+    if (!gid) {
+      const found = await findCurrentMonthGid(sheetId);
+      gid = found.gid; tabName = found.tabName;
+    }
+
+    statusEl.textContent = `⏳ 데이터 읽는 중... (탭: ${tabName || 'gid:'+gid})`;
+    const res = await fetch(sheetCsvUrl(sheetId, gid));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const csv = await res.text();
+
+    const now = new Date();
+    importParsed = parseSheetCsv(csv, now.getFullYear(), now.getMonth()+1);
+
+    if (importParsed.length === 0) {
+      statusEl.textContent = '⚠️ HF / HCl / HNO3 출하 일정을 찾지 못했습니다. 시트 탭을 직접 선택 후 URL을 다시 붙여넣어 보세요.';
+    } else {
+      statusEl.textContent = `✅ ${importParsed.length}개 출하 일정 감지됨`;
+      renderImportPreview();
+    }
+  } catch(e) {
+    statusEl.textContent = `❌ 오류: ${e.message} — 시트 공개 설정을 확인해주세요.`;
   }
+  btn.disabled = false; btn.textContent = '불러오기';
+};
 
-  const previewDiv = document.getElementById('importPreview');
-  const listDiv = document.getElementById('importPreviewList');
-
-  if (importParsed.length === 0) {
-    previewDiv.style.display = 'none';
-    document.getElementById('importConfirmBtn').disabled = true;
-    return;
-  }
-
-  listDiv.innerHTML = importParsed.map(item => {
+function renderImportPreview() {
+  const tagClass = { HF:'tag-hf', HCl:'tag-hcl', HNO3:'tag-hno3' };
+  document.getElementById('importPreviewList').innerHTML = importParsed.map((item, idx) => {
     const tc = tagClass[item.chem] || 'tag-hf';
     const qtyTxt = item.qty ? ` — ${item.qty.toLocaleString()} lb` : '';
     const timeTxt = item.time ? ` (${item.time})` : '';
-    return `<div class="import-preview-item">
+    return `<div class="import-preview-item" id="import-row-${idx}">
       <span>${item.date}</span>
       <span class="import-tag ${tc}">${item.chem}</span>
-      <span style="color:var(--text2)">${item.chem} 출하${qtyTxt}${timeTxt}</span>
+      <span style="color:var(--text2);flex:1">${item.chem} 출하${qtyTxt}${timeTxt}</span>
+      <button onclick="removeImportRow(${idx})" style="background:none;border:none;cursor:pointer;color:var(--text3);font-size:15px;padding:0 4px;line-height:1;" title="제외">✕</button>
     </div>`;
   }).join('');
+  document.getElementById('importPreview').style.display = 'block';
+  const cnt = importParsed.length;
+  document.getElementById('importConfirmBtn').disabled = cnt === 0;
+  document.getElementById('importConfirmBtn').textContent = cnt > 0 ? `Firebase에 저장 (${cnt}개)` : 'Firebase에 저장';
+}
 
-  previewDiv.style.display = 'block';
-  document.getElementById('importConfirmBtn').disabled = false;
+window.removeImportRow = (idx) => {
+  importParsed.splice(idx, 1);
+  if (importParsed.length === 0) {
+    document.getElementById('importPreview').style.display = 'none';
+    document.getElementById('importStatus').textContent = '⚠️ 모든 항목이 제외되었습니다.';
+    document.getElementById('importConfirmBtn').disabled = true;
+    document.getElementById('importConfirmBtn').textContent = 'Firebase에 저장';
+  } else {
+    renderImportPreview();
+  }
 };
 
 window.confirmImport = async () => {
   if (importParsed.length === 0) return;
   const btn = document.getElementById('importConfirmBtn');
-  btn.disabled = true;
-  btn.textContent = '저장 중...';
+  btn.disabled = true; btn.textContent = '저장 중...';
   setSyncStatus('syncing');
-
   let count = 0;
   for (const item of importParsed) {
     const timeTxt = item.time ? ` ${item.time}` : '';
-    const qtyTxt = item.qty ? ` (${item.qty.toLocaleString()} lb)` : '';
+    const qtyTxt  = item.qty  ? ` (${item.qty.toLocaleString()} lb)` : '';
     await push(tasksRef, {
       text: `${item.chem} 출하${qtyTxt}${timeTxt}`,
-      deadline: item.date,
-      worker: '',
-      category: '출하',
-      priority: '높음',
-      status: '예정',
+      deadline: item.date, worker: '',
+      category: '출하', priority: '높음', status: '예정',
       createdAt: new Date().toISOString(),
     });
     count++;
   }
-
   setSyncStatus('connected');
   showToast(`✓ ${count}개 Task가 추가되었습니다`);
   closeImportModal();
