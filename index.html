@@ -349,7 +349,8 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <div class="import-box">
     <h3>📋 고객 스케줄 Import</h3>
     <p class="import-desc">
-      고객 구글 시트 URL을 붙여넣으면 <b>현재 월 탭</b>을 자동으로 읽어 HF / HCl / HNO3 출하 일정을 생성합니다.<br>
+      구글 시트에서 <b>해당 월 탭을 클릭</b>한 상태의 URL을 붙여넣으세요.<br>
+      예: June 탭 클릭 → 주소창 URL 복사 → 붙여넣기 → 불러오기<br>
       시트가 <b>"링크가 있는 모든 사용자 — 뷰어"</b> 공개 상태여야 합니다.
     </p>
     <div style="display:flex;gap:8px;align-items:center;">
@@ -904,93 +905,126 @@ async function findCurrentMonthGid(sheetId) {
 }
 
 function parseSheetCsv(csv, year, month) {
-  const lines = csv.split('\n');
+  // CSV를 올바르게 파싱 (셀 내 줄바꿈 처리)
+  function parseCsvRows(text) {
+    const rows = [];
+    let cur = [], cell = '', inQ = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (inQ) {
+        if (c === '"' && text[i+1] === '"') { cell += '"'; i++; }
+        else if (c === '"') inQ = false;
+        else cell += c;
+      } else {
+        if (c === '"') inQ = true;
+        else if (c === ',') { cur.push(cell.trim()); cell = ''; }
+        else if (c === '\n') { cur.push(cell.trim()); rows.push(cur); cur = []; cell = ''; }
+        else if (c !== '\r') cell += c;
+      }
+    }
+    if (cell || cur.length) { cur.push(cell.trim()); rows.push(cur); }
+    return rows;
+  }
+
+  const rows = parseCsvRows(csv);
   const results = [];
 
-  // 수량 테이블 파싱 (Week 행)
-  const weekQty = {};
-  let weekColNums = [];
-  let weekColIndices = [];
+  // 1) 수량 테이블 파싱
+  const weekQty = {}; // { 'HF': { '22': 35998, ... }, ... }
+  let weekNums = [], weekIdxs = [];
 
-  for (let i = 0; i < lines.length; i++) {
-    const cells = lines[i].split(',').map(c => c.replace(/"/g,'').trim());
-    // Week 헤더 행 찾기
-    if (cells.some(c => c === 'Week')) {
-      weekColIndices = [];
-      weekColNums = [];
-      cells.forEach((c, idx) => {
-        if (/^\d{2}$/.test(c)) { weekColNums.push(c); weekColIndices.push(idx); }
-      });
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    // Week 헤더 행: "Week" 포함 + 2자리 숫자 컬럼들
+    if (r.some(c => c === 'Week')) {
+      weekNums = []; weekIdxs = [];
+      r.forEach((c, idx) => { if (/^\d{2}$/.test(c)) { weekNums.push(c); weekIdxs.push(idx); } });
     }
-    // 화학물질 수량 행
-    const firstCell = cells[0] || cells[1] || '';
-    const chemKey = ['HF','HCl','HCL','HNO3'].find(k => firstCell.toUpperCase().startsWith(k.toUpperCase()));
-    if (chemKey && weekColNums.length > 0) {
-      const normChem = chemKey.toUpperCase() === 'HCL' ? 'HCl' : chemKey;
-      weekQty[normChem] = weekQty[normChem] || {};
-      weekColIndices.forEach((colIdx, n) => {
-        const qty = parseInt((cells[colIdx]||'').replace(/,/g,''));
-        if (!isNaN(qty) && qty > 0) weekQty[normChem][weekColNums[n]] = qty;
+    // 화학물질 행: "HF, 49%" / "HCl, 31%" / "HNO3, 65%"
+    const chemRaw = r[1] || r[0] || '';
+    let chemKey = null;
+    if (/^HF/i.test(chemRaw))   chemKey = 'HF';
+    if (/^HCl/i.test(chemRaw))  chemKey = 'HCl';
+    if (/^HNO3/i.test(chemRaw)) chemKey = 'HNO3';
+    if (chemKey && weekNums.length > 0) {
+      weekQty[chemKey] = weekQty[chemKey] || {};
+      weekIdxs.forEach((colIdx, n) => {
+        const qty = parseInt((r[colIdx]||'').replace(/,/g,''));
+        if (!isNaN(qty) && qty > 0) weekQty[chemKey][weekNums[n]] = qty;
       });
     }
   }
 
-  // 달력 파싱: 날짜 행 + 내용 행 세트
-  let currentWeek = null;
-  for (let i = 0; i < lines.length - 1; i++) {
-    const cells = lines[i].split(',').map(c => c.replace(/"/g,'').trim());
-    // 주차 감지 (첫 컬럼 2자리 숫자)
-    if (/^\d{2}$/.test(cells[0])) currentWeek = cells[0];
+  // 2) 달력 파싱
+  // 구조: [날짜행] SUN=col1, MON=col2, TUE=col3, WED=col4, THU=col5, FRI=col6, SAT=col7
+  // 날짜행 앞 col0 = 주차번호 (다음 내용행에)
+  // 실제: 날짜행 col0='' or week, col1~7 = 날짜숫자
+  // 내용행 col0=week, col1~7 = 내용
 
-    // 날짜 행 감지: 1~31 숫자 4개 이상
-    const hasDays = cells.filter(c => /^\d{1,2}$/.test(c) && +c >= 1 && +c <= 31).length >= 4;
-    if (!hasDays) continue;
+  for (let i = 0; i < rows.length; i++) {
+    const r = rows[i];
+    // 날짜 행 감지: col1~7 중 1~31 숫자 4개 이상
+    const dayCount = [1,2,3,4,5,6,7].filter(idx => {
+      const v = parseInt(r[idx]);
+      return !isNaN(v) && v >= 1 && v <= 31;
+    }).length;
+    if (dayCount < 4) continue;
 
-    const contentCells = lines[i+1].split(',').map(c => c.replace(/"/g,'').trim());
+    // 다음 행이 내용행
+    const contentRow = rows[i+1] || [];
+    const weekNum = contentRow[0] || '';  // 주차 번호
 
-    cells.forEach((cell, colIdx) => {
-      const day = parseInt(cell);
-      if (isNaN(day) || day < 1 || day > 31) return;
-      const content = contentCells[colIdx] || '';
-      if (!content) return;
+    // col 1~7 순회 (SUN~SAT)
+    for (let col = 1; col <= 7; col++) {
+      const dayVal = parseInt(r[col]);
+      if (isNaN(dayVal) || dayVal < 1 || dayVal > 31) continue;
 
+      const content = contentRow[col] || '';
+      if (!content) continue;
+
+      // HF/HCl/HNO3 포함 여부
       const chems = [];
-      if (/\bHF\b/i.test(content)) chems.push('HF');
+      if (/\bHF\b/i.test(content))   chems.push('HF');
       if (/\bHCL?\b/i.test(content)) chems.push('HCl');
       if (/\bHNO3\b/i.test(content)) chems.push('HNO3');
-      if (chems.length === 0) return;
+      if (chems.length === 0) continue;
 
-      // 날짜 유효성
-      const dateObj = new Date(year, month-1, day);
-      if (dateObj.getMonth() !== month-1) return;
-      const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+      // 날짜 유효성 (월 범위 체크)
+      const dateObj = new Date(year, month-1, dayVal);
+      if (dateObj.getMonth() !== month-1) continue;
+      const dateStr = `${year}-${String(month).padStart(2,'0')}-${String(dayVal).padStart(2,'0')}`;
 
       for (const chem of chems) {
-        // 시간 추출 (화학물질 앞)
-        const tRe = new RegExp(`(\\d{2,4}(?:AM|PM))\\s*${chem}`, 'i');
-        const tMatch = content.match(tRe) || content.match(/(\d{2,4}(?:AM|PM))/i);
-        const time = tMatch ? tMatch[1].replace(/^0(\d)(?=AM|PM)/i,'$1') : '';
+        // 시간: chem 앞 시간 추출 (e.g. "09AM HF" → "09AM")
+        const tRe = new RegExp(`(\\d{2,4}\\s*(?:AM|PM))\\s*${chem}`, 'i');
+        const tMatch = content.match(tRe);
+        // fallback: 첫 번째 시간
+        const tFallback = content.match(/(\d{2,4}\s*(?:AM|PM))/i);
+        const rawTime = (tMatch ? tMatch[1] : (tFallback ? tFallback[1] : '')).replace(/\s/g,'');
+        // 시간 정규화: "0800" → "08AM", "09AM" → "09AM"
+        let time = rawTime;
+        if (/^\d{4}$/.test(time)) {
+          const h = parseInt(time.slice(0,2));
+          time = `${String(h).padStart(2,'0')}${h < 12 ? 'AM' : 'PM'}`;
+        }
 
-        // 수량: 주차 수량 / 해당 주 납품 횟수
-        const wq = weekQty[chem] && currentWeek ? weekQty[chem][currentWeek] : null;
-        results.push({ date: dateStr, chem, qty: wq || null, time, week: currentWeek });
+        results.push({ date: dateStr, chem, qty: null, time, week: weekNum });
       }
-    });
+    }
   }
 
-  // 수량 배분: 같은 주/같은 화학물질이면 균등 배분
-  const grouped = {};
+  // 3) 수량 배분
+  const weekCount = {};
   results.forEach(r => {
-    const key = `${r.week}_${r.chem}`;
-    grouped[key] = (grouped[key]||0) + 1;
+    const k = `${r.week}_${r.chem}`;
+    weekCount[k] = (weekCount[k]||0) + 1;
   });
   return results.map(r => {
-    const key = `${r.week}_${r.chem}`;
-    const cnt = grouped[key] || 1;
-    return { ...r, qty: r.qty ? Math.round(r.qty / cnt) : null };
+    const k = `${r.week}_${r.chem}`;
+    const wq = weekQty[r.chem] && r.week ? weekQty[r.chem][r.week] : null;
+    return { ...r, qty: wq ? Math.round(wq / (weekCount[k]||1)) : null };
   });
 }
-
 window.openImportModal = () => {
   const saved = localStorage.getItem('jnfam_sheet_url') || '';
   document.getElementById('sheetUrlInput').value = saved;
@@ -1024,15 +1058,15 @@ window.fetchSheet = async () => {
 
   try {
     const gidMatch = url.match(/gid=(\d+)/);
-    let gid = gidMatch ? gidMatch[1] : null;
-    let tabName = '';
+    const gid = gidMatch ? gidMatch[1] : null;
 
     if (!gid) {
-      const found = await findCurrentMonthGid(sheetId);
-      gid = found.gid; tabName = found.tabName;
+      statusEl.textContent = '⚠️ 월 탭을 직접 클릭한 후 URL을 복사해주세요. (URL에 gid= 포함 필요)';
+      btn.disabled = false; btn.textContent = '불러오기';
+      return;
     }
 
-    statusEl.textContent = `⏳ 데이터 읽는 중... (탭: ${tabName || 'gid:'+gid})`;
+    statusEl.textContent = `⏳ 데이터 읽는 중...`;
     const res = await fetch(sheetCsvUrl(sheetId, gid));
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const csv = await res.text();
