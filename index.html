@@ -74,7 +74,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .cal-dow:last-child{border-right:none;}
 .cal-dow.sat{color:var(--cyan);}.cal-dow.sun{color:var(--red);}.cal-dow.wknd{color:var(--text3);font-size:10px;}
 .cal-grid{display:grid;grid-template-columns:repeat(5,1fr) 0.55fr;}
-.cal-day{height:120px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
+.cal-day{height:170px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
 .cal-day:nth-child(7n){border-right:none;}
 .cal-day:hover{background:var(--accent-l);}
 .cal-day.other-month{background:var(--surface2);opacity:.5;}
@@ -203,7 +203,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   .list-header .list-hdr:nth-child(4),.list-header .list-hdr:nth-child(5),
   .list-item>*:nth-child(4),.list-item>*:nth-child(5){display:none;}
   .cal-header,.cal-grid{grid-template-columns:repeat(5,1fr) 0.45fr;}
-  .cal-day{height:80px;padding:5px 3px;overflow:hidden;}
+  .cal-day{height:150px;padding:5px 3px;overflow:hidden;}
   .weekend-cell{height:80px;}
 }
 </style>
@@ -533,7 +533,7 @@ function renderCalendar() {
       if (!inMonth) cls+=' other-month';
       if (isToday)  cls+=' today';
 
-      const MAX=3;
+      const MAX=5;
       const chips = dayTasks.slice(0,MAX).map(t=>
         `<div class="task-chip ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
           ${taskPrefix(t)} ${t.text}
