@@ -74,7 +74,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .cal-dow:last-child{border-right:none;}
 .cal-dow.sat{color:var(--cyan);}.cal-dow.sun{color:var(--red);}.cal-dow.wknd{color:var(--text3);font-size:10px;}
 .cal-grid{display:grid;grid-template-columns:repeat(5,1fr) 0.55fr;}
-.cal-day{height:170px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
+.cal-day{height:120px;padding:8px 6px 4px;border-right:1px solid var(--border);border-bottom:1px solid var(--border);cursor:pointer;transition:background .12s;overflow:hidden;}
 .cal-day:nth-child(7n){border-right:none;}
 .cal-day:hover{background:var(--accent-l);}
 .cal-day.other-month{background:var(--surface2);opacity:.5;}
@@ -93,6 +93,31 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .task-chip.soon  {color:var(--yellow);background:var(--yellow-l);border-left-color:var(--yellow);}
 .task-chip.plan  {color:var(--text2); background:var(--surface2);border-left-color:var(--border2);}
 .task-more{font-size:10px;color:var(--text3);padding:1px 6px;}
+/* ── Task 종류(카테고리)별 색·아이콘 ── */
+.task-chip.cat{color:var(--cc);background:var(--cb);border-left:3px solid var(--cc);}
+.task-chip .cat-ic{flex-shrink:0;font-size:11px;line-height:1;}
+.task-chip .st{flex-shrink:0;font-size:9px;font-weight:800;border-radius:3px;padding:0 3px;line-height:13px;}
+.task-chip .st.late{background:var(--red);color:#fff;}
+.task-chip .st.inprog{background:var(--accent);color:#fff;}
+.task-chip .st.done{background:var(--green);color:#fff;}
+.task-chip .st.hold{background:#94a3b8;color:#fff;}
+.task-chip .tx{overflow:hidden;text-overflow:ellipsis;}
+.task-chip.is-done{opacity:.55;}
+.task-chip.is-done .tx{text-decoration:line-through;}
+.task-chip.is-late{box-shadow:inset 0 0 0 1px var(--red);}
+.cat-legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;}
+.cat-legend .lg-title{font-size:11px;color:var(--text3);margin-right:2px;}
+.cat-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;color:var(--cc);background:var(--cb);border:1.5px solid transparent;cursor:pointer;user-select:none;white-space:nowrap;}
+.cat-pill:hover{border-color:var(--cc);}
+.cat-pill.on{border-color:var(--cc);box-shadow:0 0 0 2px var(--cb);}
+.cat-pill.off{opacity:.35;}
+.cat-pill .n{font-family:'IBM Plex Mono',monospace;font-weight:600;opacity:.8;}
+.cat-badge{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;padding:2px 9px;border-radius:4px;color:var(--cc);background:var(--cb);border:1px solid var(--cc);}
+.modal-task-item.cat{border-left:4px solid var(--cc);}
+.cat-select-wrap{display:flex;gap:8px;align-items:center;}
+.cat-select-wrap select{flex:1;}
+.cat-preview{min-width:92px;justify-content:center;padding:7px 10px;font-size:13px;}
+.list-item.cat{border-left:4px solid var(--cc);}
 
 /* MODAL */
 .modal-overlay{display:none;position:fixed;inset:0;background:rgba(30,37,51,.4);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(3px);}
@@ -203,7 +228,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   .list-header .list-hdr:nth-child(4),.list-header .list-hdr:nth-child(5),
   .list-item>*:nth-child(4),.list-item>*:nth-child(5){display:none;}
   .cal-header,.cal-grid{grid-template-columns:repeat(5,1fr) 0.45fr;}
-  .cal-day{height:150px;padding:5px 3px;overflow:hidden;}
+  .cal-day{height:80px;padding:5px 3px;overflow:hidden;}
   .weekend-cell{height:80px;}
 }
 </style>
@@ -246,6 +271,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
         </div>
       </div>
       <div class="stats-row" id="statsRow"></div>
+      <div class="cat-legend" id="catLegend"></div>
     </div>
     <div class="calendar">
       <div class="cal-header">
@@ -276,8 +302,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
       </select>
       <select class="filter-select" id="filterCat" onchange="renderList()">
         <option value="">전체 카테고리</option>
-        <option>생산</option><option>출하</option><option>입고</option>
-        <option>점검</option><option>미팅</option><option>행정</option><option>기타</option>
+
       </select>
       <div class="dl-group">
         <button class="btn-dl btn-dl-csv" onclick="downloadCSV()">⬇ CSV</button>
@@ -316,11 +341,11 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
       </div>
       <div class="form-row">
         <div>
-          <label class="form-label">카테고리</label>
-          <select class="form-select" id="inp-cat">
-            <option>생산</option><option>출하</option><option>입고</option><option>점검</option>
-            <option>미팅</option><option>행정</option><option>기타</option>
-          </select>
+          <label class="form-label">Task 종류 *</label>
+          <div class="cat-select-wrap">
+            <select class="form-select" id="inp-cat" onchange="catPreview('inp-cat','inp-cat-pv')"></select>
+            <span class="cat-badge cat-preview" id="inp-cat-pv"></span>
+          </div>
         </div>
         <div>
           <label class="form-label">우선순위</label>
@@ -455,6 +480,48 @@ function taskPrefix(t) {
   if (c==='soon')   return '◆';
   return '·';
 }
+/* ── Task 종류 정의: 아이콘·색 ── */
+const CATS = [
+  {k:'출하', ic:'◆', c:'#dc2626', b:'#fef2f2', d:'출고·출하'},
+  {k:'입고', ic:'◆', c:'#2563eb', b:'#eff4ff', d:'입고·수령'},
+  {k:'준비', ic:'◆', c:'#ca8a04', b:'#fefce8', d:'출하 준비·IBC 준비'},
+  {k:'생산', ic:'■', c:'#16a34a', b:'#f0fdf4', d:'생산·충전'},
+  {k:'점검', ic:'▲', c:'#ea580c', b:'#fff7ed', d:'설비 점검·청소'},
+  {k:'미팅', ic:'●', c:'#7c3aed', b:'#f5f3ff', d:'회의·미팅'},
+  {k:'행정', ic:'●', c:'#0891b2', b:'#ecfeff', d:'서류·행정'},
+  {k:'기타', ic:'●', c:'#64748b', b:'#f1f5f9', d:'기타'},
+];
+const CAT = k => CATS.find(c=>c.k===k) || CATS[CATS.length-1];
+window.CAT = CAT;
+const catVars = k => { const c=CAT(k); return `--cc:${c.c};--cb:${c.b}`; };
+const catBadge = k => `<span class="cat-badge" style="${catVars(k)}">${CAT(k).ic} ${k||'기타'}</span>`;
+const catOptions = (sel) => CATS.map(c=>`<option value="${c.k}"${c.k===sel?' selected':''} style="color:${c.c};font-weight:700">${c.ic} ${c.k}</option>`).join('');
+const escH = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+function statusMark(t){
+  if (t.status==='완료')   return '<span class="st done">✓</span>';
+  if (t.status==='진행중') return '<span class="st inprog">진행</span>';
+  if (t.status==='보류')   return '<span class="st hold">보류</span>';
+  if (diffDays(t.deadline) < 0) return '<span class="st late">지연</span>';
+  return '';
+}
+function chipHTML(t, ds, small){
+  const c = CAT(t.category); const cls = taskClass(t);
+  return `<div class="task-chip cat${cls==='done'?' is-done':''}${cls==='late'?' is-late':''}" style="${catVars(t.category)}${small?';font-size:9px;padding:2px 4px':''}" title="[${t.category||'기타'}] ${escH(t.text)} · ${t.status||''}" onclick="openDayModal('${ds}',event)">
+    <span class="cat-ic">${c.ic}</span>${statusMark(t)}<span class="tx">${escH(t.text)}</span></div>`;
+}
+let calCatFilter = '';
+window.setCalCat = k => { calCatFilter = calCatFilter===k ? '' : k; renderCalendar(); };
+window.catPreview = (selId, pvId) => {
+  const sel=document.getElementById(selId), pv=document.getElementById(pvId); if(!sel||!pv) return;
+  const c=CAT(sel.value); pv.setAttribute('style',catVars(c.k)); pv.textContent=`${c.ic} ${c.k}`;
+  sel.style.color=c.c; sel.style.fontWeight='700';
+};
+function initCatSelects(){
+  const inp=document.getElementById('inp-cat'); if(inp){ inp.innerHTML=catOptions('출하'); catPreview('inp-cat','inp-cat-pv'); }
+  const f=document.getElementById('filterCat'); if(f){ f.innerHTML='<option value="">전체 카테고리</option>'+CATS.map(c=>`<option value="${c.k}" style="color:${c.c}">${c.ic} ${c.k}</option>`).join(''); }
+}
+initCatSelects();
+
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -514,6 +581,14 @@ function renderCalendar() {
       <span class="stat-val" style="color:${s.c}">${s.v}</span>
     </div>`).join('');
 
+  const monthKey = `${curYear}-${String(curMonth+1).padStart(2,'0')}`;
+  const catCnt = {}; mTasks.forEach(t=>{ const k=CAT(t.category).k; catCnt[k]=(catCnt[k]||0)+1; });
+  document.getElementById('catLegend').innerHTML = '<span class="lg-title">Task 종류 (클릭해서 필터)</span>' +
+    CATS.map(c=>`<span class="cat-pill${calCatFilter===c.k?' on':''}${calCatFilter&&calCatFilter!==c.k?' off':''}" style="${catVars(c.k)}" title="${c.d}" onclick="setCalCat('${c.k}')">${c.ic} ${c.k} <span class="n">${catCnt[c.k]||0}</span></span>`).join('') +
+    (calCatFilter?` <span class="cat-pill" style="--cc:#475569;--cb:#fff;border-color:#cbd5e1" onclick="setCalCat('${calCatFilter}')">✕ 전체 보기</span>`:'');
+  if (calCatFilter) Object.keys(byDate).forEach(d=>{ byDate[d]=byDate[d].filter(t=>CAT(t.category).k===calCatFilter); });
+  Object.values(byDate).forEach(arr=>arr.sort((a,b)=>CATS.indexOf(CAT(a.category))-CATS.indexOf(CAT(b.category))));
+
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
 
@@ -533,11 +608,8 @@ function renderCalendar() {
       if (!inMonth) cls+=' other-month';
       if (isToday)  cls+=' today';
 
-      const MAX=5;
-      const chips = dayTasks.slice(0,MAX).map(t=>
-        `<div class="task-chip ${taskClass(t)}" onclick="openDayModal('${ds}',event)">
-          ${taskPrefix(t)} ${t.text}
-        </div>`).join('');
+      const MAX=3;
+      const chips = dayTasks.slice(0,MAX).map(t=>chipHTML(t,ds,false)).join('');
       const more = dayTasks.length>MAX?`<div class="task-more">+${dayTasks.length-MAX}개 더</div>`:'';
 
       const cell = document.createElement('div');
@@ -568,10 +640,7 @@ function renderCalendar() {
 
     const renderWkndDay = (d, ds, dayTasks, label) => {
       const isT = d.getTime()===today.getTime();
-      const chips = dayTasks.slice(0,2).map(t=>
-        `<div class="task-chip ${taskClass(t)}" style="font-size:9px;padding:2px 4px" onclick="openDayModal('${ds}',event)">
-          ${taskPrefix(t)} ${t.text}
-        </div>`).join('');
+      const chips = dayTasks.slice(0,2).map(t=>chipHTML(t,ds,true)).join('');
       const more = dayTasks.length>2?`<div class="task-more">+${dayTasks.length-2}</div>`:'';
       return `<div class="weekend-day-label">${label} ${d.getDate()}${isT?' <span class="today-label">TODAY</span>':''}</div>${chips}${more}`;
     };
@@ -606,15 +675,15 @@ window.openDayModal = (ds, e) => {
       const dd = diffDays(t.deadline);
       const ddTxt = t.status==='완료'?'완료됨':(dd<0?`${-dd}일 지연`:`D-${dd}`);
       const ddColor = t.status==='완료'?'var(--green)':(dd<0?'var(--red)':'var(--text2)');
-      const cats = ['생산','출하','입고','점검','미팅','행정','기타'].map(c=>`<option${c===t.category?' selected':''}>${c}</option>`).join('');
+      const cats = catOptions(CAT(t.category).k);
       const prios = ['높음','보통','낮음'].map(p=>`<option${p===t.priority?' selected':''}>${p}</option>`).join('');
       return `
-      <div class="modal-task-item" id="item-${t._key}">
+      <div class="modal-task-item cat" id="item-${t._key}" style="${catVars(t.category)}">
         <button class="edit-btn" onclick="toggleEdit('${t._key}','${ds}')" title="편집">✏️</button>
         <button class="del-btn" onclick="deleteTask('${t._key}','${ds}')" title="삭제">×</button>
         <div class="modal-task-text">${t.text}</div>
         <div class="modal-task-meta">
-          ${t.category?`<span class="meta-chip">${t.category}</span>`:''}
+          ${catBadge(CAT(t.category).k)}
           ${t.worker?`<span class="meta-chip">👤 ${t.worker}</span>`:''}
           ${t.priority?`<span class="meta-chip">${t.priority}</span>`:''}
           <span class="meta-chip" style="color:${ddColor}">${ddTxt}</span>
@@ -629,7 +698,7 @@ window.openDayModal = (ds, e) => {
             <input class="edit-input" id="edit-worker-${t._key}" value="${t.worker||''}" placeholder="담당자"/>
           </div>
           <div class="edit-row">
-            <select class="edit-input" id="edit-cat-${t._key}">${cats}</select>
+            <select class="edit-input" id="edit-cat-${t._key}" style="color:${CAT(t.category).c};font-weight:700" onchange="this.style.color=CAT(this.value).c">${cats}</select>
             <select class="edit-input" id="edit-prio-${t._key}">${prios}</select>
           </div>
           <div class="edit-row">
@@ -725,7 +794,7 @@ function renderList() {
     .map(([k,t])=>({...t,_key:k}));
   if (fs) list = list.filter(t=>t.status===fs);
   if (fm) list = list.filter(t=>t.deadline.startsWith(`${curYear}-${fm}`));
-  if (fc) list = list.filter(t=>t.category===fc);
+  if (fc) list = list.filter(t=>CAT(t.category).k===fc);
   list.sort((a,b)=>a.deadline.localeCompare(b.deadline));
 
   const ddClass = (t) => {
@@ -741,14 +810,14 @@ function renderList() {
 
   document.getElementById('listContainer').innerHTML = list.length
     ? list.map(t=>`
-      <div class="list-item">
+      <div class="list-item cat" style="${catVars(t.category)}">
         <div>
-          <div class="list-text">${t.text}</div>
+          <div class="list-text"><span style="color:${CAT(t.category).c};margin-right:4px">${CAT(t.category).ic}</span>${t.text}</div>
           <div class="list-meta">${t.worker||''} ${t.worker&&t.category?'·':''} ${t.category||''}</div>
         </div>
         <div class="list-meta">${t.deadline}</div>
         <div class="dday ${ddClass(t)}">${ddText(t)}</div>
-        <div class="list-meta">${t.category||'-'}</div>
+        <div>${catBadge(CAT(t.category).k)}</div>
         <div>
           <select class="status-select" onchange="updateStatusList('${t._key}',this.value)">
             ${['예정','진행중','완료','보류'].map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('')}
@@ -768,7 +837,7 @@ function getFilteredList() {
     .map(([k,t])=>({...t,_key:k}));
   if (fs) list = list.filter(t=>t.status===fs);
   if (fm) list = list.filter(t=>t.deadline.startsWith(`${curYear}-${fm}`));
-  if (fc) list = list.filter(t=>t.category===fc);
+  if (fc) list = list.filter(t=>CAT(t.category).k===fc);
   list.sort((a,b)=>a.deadline.localeCompare(b.deadline));
   return list;
 }
