@@ -89,7 +89,19 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .hol-label{font-family:'Noto Sans KR',sans-serif;font-size:9.5px;font-weight:700;color:var(--red);background:#ffe4e6;border:1px solid #fecdd3;border-radius:4px;padding:0 5px;line-height:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hol-label.obs{border-style:dashed;}
 .weekend-day-label.hol{color:var(--red);}
-.modal-hol{display:inline-block;margin-left:8px;vertical-align:middle;font-size:12px;}
+.hb{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;color:#fff;border-radius:3px;padding:0 3px;margin-right:3px;line-height:12px;vertical-align:1px;}
+.hb.us{background:var(--red);}
+.hb.ga{background:#ea580c;}
+.hb.est{background:transparent;color:#ea580c;border:1px dashed #ea580c;line-height:10px;}
+/* 조지아 주만 휴일 (연방은 근무) → 주황 */
+.cal-day.holiday.ga-only{background:#fff7ed;}
+.cal-day.holiday.ga-only:hover{background:#ffedd5;}
+.cal-day.holiday.ga-only .dn{color:#c2410c;}
+.hol-label.ga-only{color:#c2410c;background:#ffedd5;border-color:#fed7aa;}
+.weekend-day-label.hol.ga-only{color:#c2410c;}
+/* 연방만 휴일 (조지아 주는 근무, 예: 2월 대통령의 날) → 옅게 */
+.cal-day.holiday.us-only{background:#fdf2f8;}
+.hol-label.us-only{background:#fff;border-style:dashed;}
 .weekend-day-label{font-size:9px;font-weight:700;color:var(--text3);margin-bottom:3px;margin-top:6px;padding-top:4px;border-top:1px dashed var(--border);}
 .weekend-day-label:first-child{margin-top:0;border-top:none;padding-top:0;}
 .task-chip.weekend{font-size:9px;padding:2px 4px;}
@@ -531,42 +543,101 @@ function initCatSelects(){
 }
 initCatSelects();
 
-/* ── 미국 연방 휴일 계산 (5 U.S.C. 6103, 11개) ──
-   주말에 걸리면 토→금요일, 일→월요일 대체휴일(observed)도 함께 표시 */
+/* ── 휴일: 미국 연방(US) + 조지아 주(GA) ───────────────────────────
+   US: 연방 휴일 11개를 규칙으로 계산 (주말이면 토→금, 일→월 대체)
+   GA: 주지사가 매년 공표 → 공식 발표된 해는 GA_OFFICIAL 표를 그대로 사용,
+       아직 발표 안 된 해는 규칙으로 '추정'해서 표시 (tooltip에 추정 표기)
+   ▶ 새 해 목록이 georgia.gov에 올라오면 GA_OFFICIAL에 한 줄씩 추가하면 끝 */
 const ymd = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 const nthDow  = (y,m,dow,n) => { const f=new Date(y,m,1); return new Date(y,m,1+((dow-f.getDay()+7)%7)+(n-1)*7); };
 const lastDow = (y,m,dow)   => { const l=new Date(y,m+1,0); return new Date(y,m,l.getDate()-((l.getDay()-dow+7)%7)); };
+const addDays = (d,n) => { const x=new Date(d); x.setDate(x.getDate()+n); return x; };
+function easter(y){ // 그레고리력 부활절
+  const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),
+        h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451),
+        mo=Math.floor((h+l-7*m+114)/31),da=((h+l-7*m+114)%31)+1;
+  return new Date(y,mo-1,da);
+}
 function usHolidays(y){
   const list = [
-    {d:new Date(y,0,1),     ko:'신정',          en:"New Year's Day"},
-    {d:nthDow(y,0,1,3),     ko:'MLK 데이',      en:'Martin Luther King Jr. Day'},
-    {d:nthDow(y,1,1,3),     ko:'대통령의 날',    en:"Washington's Birthday (Presidents Day)"},
-    {d:lastDow(y,4,1),      ko:'메모리얼 데이',  en:'Memorial Day'},
-    {d:new Date(y,5,19),    ko:'준틴스',        en:'Juneteenth'},
-    {d:new Date(y,6,4),     ko:'독립기념일',     en:'Independence Day'},
-    {d:nthDow(y,8,1,1),     ko:'노동절',        en:'Labor Day'},
-    {d:nthDow(y,9,1,2),     ko:'콜럼버스 데이',  en:'Columbus Day'},
-    {d:new Date(y,10,11),   ko:'재향군인의 날',  en:'Veterans Day'},
-    {d:nthDow(y,10,4,4),    ko:'추수감사절',     en:'Thanksgiving Day'},
-    {d:new Date(y,11,25),   ko:'크리스마스',     en:'Christmas Day'},
+    {d:new Date(y,0,1),   ko:'신정',          en:"New Year's Day"},
+    {d:nthDow(y,0,1,3),   ko:'MLK 데이',      en:'Martin Luther King Jr. Day'},
+    {d:nthDow(y,1,1,3),   ko:'대통령의 날',    en:"Washington's Birthday"},
+    {d:lastDow(y,4,1),    ko:'메모리얼 데이',  en:'Memorial Day'},
+    {d:new Date(y,5,19),  ko:'준틴스',        en:'Juneteenth'},
+    {d:new Date(y,6,4),   ko:'독립기념일',     en:'Independence Day'},
+    {d:nthDow(y,8,1,1),   ko:'노동절',        en:'Labor Day'},
+    {d:nthDow(y,9,1,2),   ko:'콜럼버스 데이',  en:'Columbus Day'},
+    {d:new Date(y,10,11), ko:'재향군인의 날',  en:'Veterans Day'},
+    {d:nthDow(y,10,4,4),  ko:'추수감사절',     en:'Thanksgiving Day'},
+    {d:new Date(y,11,25), ko:'크리스마스',     en:'Christmas Day'},
   ];
   const out = {};
   list.forEach(h => {
     out[ymd(h.d)] = {ko:h.ko, en:h.en, observed:false};
     const dow = h.d.getDay();
-    if (dow===6 || dow===0) {
-      const o = new Date(h.d); o.setDate(o.getDate() + (dow===6 ? -1 : 1));
-      out[ymd(o)] = {ko:h.ko, en:h.en, observed:true};
-    }
+    if (dow===6 || dow===0) out[ymd(addDays(h.d, dow===6?-1:1))] = {ko:h.ko, en:h.en, observed:true};
   });
   return out;
 }
-const _holCache = {};
-const holYear = y => (_holCache[y] ||= usHolidays(y));
-// 1/1이 토요일이면 대체휴일은 전년도 12/31 → 다음 해 목록도 같이 확인
-function getHoliday(ds){ const y=+ds.slice(0,4); return holYear(y)[ds] || holYear(y+1)[ds] || null; }
+// 조지아 주 공식 휴일 (출처: georgia.gov/georgia-state-holidays-YYYY) — 실제 휴무일 기준
+const GA_OFFICIAL = {
+  2025: [
+    ['2025-01-01','신정',"New Year's Day"], ['2025-01-20','MLK 데이','Martin Luther King Jr. Day'],
+    ['2025-04-18','주 휴일(성금요일)','State Holiday (Good Friday)'], ['2025-05-26','메모리얼 데이','Memorial Day'],
+    ['2025-06-19','준틴스','Juneteenth'], ['2025-07-04','독립기념일','Independence Day'],
+    ['2025-09-01','노동절','Labor Day'], ['2025-10-13','콜럼버스 데이','Columbus Day'],
+    ['2025-11-11','재향군인의 날','Veterans Day'], ['2025-11-27','추수감사절','Thanksgiving Day'],
+    ['2025-11-28','주 휴일','State Holiday (day after Thanksgiving)'], ['2025-12-25','크리스마스','Christmas Day'],
+    ['2025-12-26','대통령의 날(GA 이동)',"Washington's Birthday (observed by GA)"],
+  ],
+  2026: [
+    ['2026-01-01','신정',"New Year's Day"], ['2026-01-19','MLK 데이','Martin Luther King Jr. Day'],
+    ['2026-04-03','주 휴일(성금요일)','State Holiday (Good Friday)'], ['2026-05-25','메모리얼 데이','Memorial Day'],
+    ['2026-06-19','준틴스','Juneteenth'], ['2026-07-03','독립기념일(대체)','Independence Day (observed)'],
+    ['2026-09-07','노동절','Labor Day'], ['2026-10-12','콜럼버스 데이','Columbus Day'],
+    ['2026-11-11','재향군인의 날','Veterans Day'], ['2026-11-26','추수감사절','Thanksgiving Day'],
+    ['2026-11-27','주 휴일','State Holiday (day after Thanksgiving)'],
+    ['2026-12-24','대통령의 날(GA 이동)',"Washington's Birthday (observed by GA)"], ['2026-12-25','크리스마스','Christmas Day'],
+  ],
+};
+function gaHolidays(y){
+  const out = {};
+  if (GA_OFFICIAL[y]) { GA_OFFICIAL[y].forEach(([ds,ko,en]) => out[ds]={ko,en,est:false}); return out; }
+  // 미발표 연도 추정: 연방 휴일(평일 기준) − 2월 대통령의 날 + 성금요일 + 추수감사절 다음날 + 크리스마스 인접 평일
+  Object.entries(usHolidays(y)).forEach(([ds,h]) => {
+    const dow = new Date(ds+'T00:00:00').getDay();
+    if (dow===0 || dow===6 || h.en==="Washington's Birthday") return;
+    out[ds] = {ko:h.ko+(h.observed?'(대체)':''), en:h.en+(h.observed?' (observed)':''), est:true};
+  });
+  out[ymd(addDays(easter(y),-2))] = {ko:'주 휴일(성금요일)', en:'State Holiday (Good Friday)', est:true};
+  out[ymd(addDays(nthDow(y,10,4,4),1))] = {ko:'주 휴일', en:'State Holiday (day after Thanksgiving)', est:true};
+  let x = new Date(y,11,24);                       // 크리스마스 휴무 바로 앞/뒤 평일
+  while (x.getDay()===0 || x.getDay()===6 || out[ymd(x)]) x = addDays(x,-1);
+  out[ymd(x)] = {ko:'대통령의 날(GA 이동)', en:"Washington's Birthday (observed by GA)", est:true};
+  return out;
+}
+const _usC={}, _gaC={};
+const usYear = y => (_usC[y] ||= usHolidays(y));
+const gaYear = y => (_gaC[y] ||= gaHolidays(y));
+// 반환: null 또는 {us, ga} — 1/1이 토요일이면 대체휴일이 전년도 12/31이라 다음 해도 확인
+function getHoliday(ds){
+  const y=+ds.slice(0,4);
+  const us = usYear(y)[ds] || usYear(y+1)[ds] || null;
+  const ga = gaYear(y)[ds] || gaYear(y+1)[ds] || null;
+  return (us||ga) ? {us, ga} : null;
+}
 window.getHoliday = getHoliday;
-const holTag = h => h ? `<span class="hol-label${h.observed?' obs':''}" title="${h.en}${h.observed?' (Observed)':''}">🇺🇸 ${h.ko}${h.observed?'(대체)':''}</span>` : '';
+const holName = h => {
+  const a = h.us ? h.us.ko+(h.us.observed?'(대체)':'') : null, b = h.ga ? h.ga.ko : null;
+  if (a && b) return a.replace('(대체)','')===b.replace('(대체)','') ? (b.length>=a.length?b:a) : `${a} / ${b}`;
+  return a || b;
+};
+const holTitle = h => [
+  h.us ? `US 연방: ${h.us.en}${h.us.observed?' (Observed)':''}` : 'US 연방: 근무일',
+  h.ga ? `GA 주: ${h.ga.en}${h.ga.est?' — 추정(주지사 공표 전)':''}` : 'GA 주: 근무일',
+].join('\n');
+const holTag = h => h ? `<span class="hol-label${h.us?'':' ga-only'}${h.ga?'':' us-only'}" title="${escH(holTitle(h))}">${h.us?'<b class="hb us">US</b>':''}${h.ga?`<b class="hb ga${h.ga.est?' est':''}">GA</b>`:''}${escH(holName(h))}</span>` : '';
 
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
@@ -652,7 +723,7 @@ function renderCalendar() {
 
       const hol = getHoliday(ds);
       let cls = 'cal-day';
-      if (hol) cls+=' holiday';
+      if (hol) cls+=' holiday'+(hol.us?'':' ga-only')+(hol.ga?'':' us-only');
       if (!inMonth) cls+=' other-month';
       if (isToday)  cls+=' today';
 
@@ -691,7 +762,7 @@ function renderCalendar() {
       const chips = dayTasks.slice(0,5).map(t=>chipHTML(t,ds,true)).join('');
       const more = dayTasks.length>5?`<div class="task-more">+${dayTasks.length-5}</div>`:'';
       const h = getHoliday(ds);
-      return `<div class="weekend-day-label${h?' hol':''}">${label} ${d.getDate()} ${holTag(h)}${isT?' <span class="today-label">TODAY</span>':''}</div>${chips}${more}`;
+      return `<div class="weekend-day-label${h?(h.us?' hol':' hol ga-only'):''}">${label} ${d.getDate()} ${holTag(h)}${isT?' <span class="today-label">TODAY</span>':''}</div>${chips}${more}`;
     };
 
     const wknd = document.createElement('div');
@@ -707,7 +778,10 @@ window.openDayModal = (ds, e) => {
   { const h=getHoliday(ds);
   document.getElementById('modalDate').innerHTML =
     d.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'}) +
-    (h?`<span class="hol-label modal-hol${h.observed?' obs':''}">🇺🇸 ${h.ko}${h.observed?' (대체휴일)':''} · ${h.en}</span>`:''); }
+    (h?`<div style="margin-top:6px;font-size:12px;line-height:1.7;font-family:'Noto Sans KR',sans-serif">
+      <div><b class="hb us">US</b> ${h.us?`<b style="color:var(--red)">${h.us.ko}${h.us.observed?' (대체휴일)':''}</b> · ${h.us.en}`:'<span style="color:var(--text3)">연방 근무일</span>'}</div>
+      <div><b class="hb ga">GA</b> ${h.ga?`<b style="color:#c2410c">${h.ga.ko}</b> · ${h.ga.en}${h.ga.est?' <span style="color:var(--text3)">(추정 · 주지사 공표 전)</span>':''}`:'<span style="color:var(--text3)">조지아 주 근무일</span>'}</div>
+    </div>`:''); }
 
   const dayTasks = Object.entries(tasks)
     .filter(([,t])=>t&&t.deadline===ds)
