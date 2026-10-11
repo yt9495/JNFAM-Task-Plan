@@ -226,6 +226,35 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .btn-dl-xlsx:hover{background:#dbeafe;}
 .dl-group{display:flex;gap:8px;margin-left:auto;}
 
+/* ── 정기 Task 패턴 ── */
+.task-chip .rp{flex-shrink:0;font-size:9px;opacity:.75;}
+.task-chip.virt{border-left-style:dashed;}
+.pt-card{background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;margin-bottom:18px;}
+.pt-head{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.pt-head h3{font-size:16px;font-weight:800;}
+.pt-head .sub{font-size:12px;color:var(--text3);}
+.pt-head .sp{flex:1;}
+.pt-table{width:100%;border-collapse:collapse;font-size:13px;}
+.pt-table th{background:var(--surface2);text-align:left;font-size:11.5px;font-weight:700;color:var(--text2);padding:10px 12px;border-bottom:1px solid var(--border);white-space:nowrap;}
+.pt-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.pt-table tr:last-child td{border-bottom:none;}
+.pt-table tr.off td{opacity:.45;}
+.pt-table td.act{text-align:right;white-space:nowrap;}
+.pt-table .nx{font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--text2);}
+.pt-btn{background:var(--white);border:1px solid var(--border2);border-radius:7px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans KR',sans-serif;color:var(--text);margin-left:4px;}
+.pt-btn:hover{border-color:var(--accent);color:var(--accent);}
+.pt-btn.del{color:var(--red);}
+.pt-btn.del:hover{border-color:var(--red);background:var(--red-l);}
+.pt-wrap{overflow-x:auto;}
+.dow-pick{display:flex;gap:5px;flex-wrap:wrap;}
+.dow-pick label{display:inline-flex;align-items:center;justify-content:center;width:38px;height:34px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;color:var(--text2);user-select:none;}
+.dow-pick input{display:none;}
+.dow-pick label:has(input:checked){background:var(--accent);border-color:var(--accent);color:#fff;}
+.pt-preview{margin-top:6px;font-size:12px;color:var(--text2);background:var(--surface2);border:1px dashed var(--border2);border-radius:8px;padding:9px 12px;line-height:1.7;}
+.pt-preview b{color:var(--accent);}
+.pt-note{font-size:11px;color:var(--text3);margin-top:4px;}
+.pattern-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-l);border:1px solid #bfdbfe;border-radius:4px;padding:1px 6px;}
+
 /* LOADING */
 .loading{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text3);font-size:13px;}
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
@@ -277,6 +306,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <button class="tab active" onclick="switchTab('calendar',this)">📅 달력</button>
   <button class="tab" onclick="switchTab('list',this)">📋 목록</button>
   <button class="tab" onclick="switchTab('add',this)">➕ Task 추가</button>
+  <button class="tab" onclick="switchTab('pattern',this)">🔁 정기 패턴</button>
 </div>
 
 <div class="main">
@@ -388,6 +418,110 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
     </div>
   </div>
 
+  <!-- PATTERN TAB -->
+  <div id="tab-pattern" style="display:none">
+    <div class="pt-card">
+      <div class="pt-head">
+        <h3>🔁 정기 Task 패턴</h3>
+        <span class="sub">반복되는 작업을 한 번 등록하면 시작일 이후 달력·목록에 자동 표시</span>
+        <span class="sp"></span>
+        <button class="btn-add" style="margin-top:0" onclick="openPatternForm()">+ 정기 패턴 추가</button>
+      </div>
+      <div class="pt-wrap">
+        <table class="pt-table">
+          <thead><tr>
+            <th style="width:46px">사용</th><th>Task</th><th>종류</th><th>주기</th><th>담당자</th>
+            <th>적용 기간</th><th>다음 일정</th><th></th>
+          </tr></thead>
+          <tbody id="patternBody"><tr><td colspan="8"><div class="loading"><div class="spinner"></div>로딩 중...</div></td></tr></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="pt-note" style="font-size:12px;line-height:1.7;padding:0 4px">
+      · 정기 Task는 미리 저장해 두지 않고 화면에 그때그때 계산해서 보여줍니다(점선 테두리 + ↻ 표시). 패턴을 고치면 앞으로의 일정이 모두 바로 바뀝니다.<br>
+      · 개별 일정의 상태를 바꾸거나 수정하면 그 1건만 실제 Task로 저장되고(↻ 표시 유지), 이후 패턴을 고쳐도 그 1건은 그대로 남습니다.<br>
+      · 개별 일정을 삭제하면 그 날짜만 건너뜁니다. 패턴을 삭제해도 이미 저장된(완료 처리 등) Task는 남습니다.
+    </div>
+  </div>
+
+</div>
+
+<!-- PATTERN FORM MODAL -->
+<div class="import-modal" id="patternModal">
+  <div class="import-box" style="width:620px">
+    <h3 id="ptFormTitle">정기 패턴 추가</h3>
+    <p class="import-desc">요일·주기를 정하면 시작일부터 자동으로 달력에 표시됩니다.</p>
+    <input type="hidden" id="pt-id"/>
+    <div class="form-row single"><div>
+      <label class="form-label">TASK 내용 *</label>
+      <input class="form-input" id="pt-text" placeholder="예: HF 출하 (Qcells) / 주간 설비 점검" oninput="ptPreview()"/>
+    </div></div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">Task 종류 *</label>
+        <div class="cat-select-wrap">
+          <select class="form-select" id="pt-cat" onchange="catPreview('pt-cat','pt-cat-pv')"></select>
+          <span class="cat-badge cat-preview" id="pt-cat-pv"></span>
+        </div>
+      </div>
+      <div>
+        <label class="form-label">담당자</label>
+        <input class="form-input" id="pt-worker" placeholder="이름 입력"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">반복 단위 *</label>
+        <select class="form-select" id="pt-freq" onchange="ptFreqUI();ptPreview()">
+          <option value="weekly">주 단위 (요일 지정)</option>
+          <option value="monthly">월 단위 (날짜 지정)</option>
+        </select>
+      </div>
+      <div>
+        <label class="form-label">간격</label>
+        <select class="form-select" id="pt-interval" onchange="ptPreview()"></select>
+      </div>
+    </div>
+    <div class="form-row single" id="pt-weekly-row"><div>
+      <label class="form-label">요일 * (여러 개 선택 가능)</label>
+      <div class="dow-pick" id="pt-days">
+        <label><input type="checkbox" value="1" onchange="ptPreview()">월</label><label><input type="checkbox" value="2" onchange="ptPreview()">화</label><label><input type="checkbox" value="3" onchange="ptPreview()">수</label><label><input type="checkbox" value="4" onchange="ptPreview()">목</label><label><input type="checkbox" value="5" onchange="ptPreview()">금</label><label><input type="checkbox" value="6" onchange="ptPreview()">토</label><label><input type="checkbox" value="0" onchange="ptPreview()">일</label>
+      </div>
+    </div></div>
+    <div class="form-row single" id="pt-monthly-row" style="display:none"><div>
+      <label class="form-label">날짜 *</label>
+      <select class="form-select" id="pt-mday" onchange="ptPreview()"></select>
+    </div></div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">시작일 *</label>
+        <input class="form-input" type="date" id="pt-start" onchange="ptPreview()"/>
+      </div>
+      <div>
+        <label class="form-label">종료일 (비우면 계속)</label>
+        <input class="form-input" type="date" id="pt-end" onchange="ptPreview()"/>
+      </div>
+    </div>
+    <div class="form-row">
+      <div>
+        <label class="form-label">휴일</label>
+        <div class="pt-note" style="font-size:12px;margin-top:9px">휴일에 걸려도 그대로 넣습니다 (달력에 휴일 표시만 됨)</div>
+      </div>
+      <div>
+        <label class="form-label">우선순위</label>
+        <select class="form-select" id="pt-prio"><option>높음</option><option selected>보통</option><option>낮음</option></select>
+      </div>
+    </div>
+    <div class="form-row single"><div>
+      <label class="form-label">메모</label>
+      <input class="form-input" id="pt-memo" placeholder="선택"/>
+    </div></div>
+    <div class="pt-preview" id="pt-preview"></div>
+    <div class="import-btn-row">
+      <button class="btn-cancel-import" onclick="closePatternForm()">취소</button>
+      <button class="btn-confirm-import" id="ptSaveBtn" onclick="savePattern()">저장</button>
+    </div>
+  </div>
 </div>
 
 <!-- IMPORT MODAL -->
@@ -447,6 +581,8 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
 const tasksRef = ref(db, 'tasks');
+const patternsRef = ref(db, 'patterns');
+let patterns = {};
 
 let tasks = {};
 let curYear  = new Date().getFullYear();
@@ -467,11 +603,21 @@ function setSyncStatus(state) {
   if (state==='')          text.textContent = '연결 끊김';
 }
 
+const rerenderAll = () => {
+  renderCalendar();
+  if (document.getElementById('tab-list').style.display !== 'none') renderList();
+  if (document.getElementById('tab-pattern').style.display !== 'none') renderPatterns();
+};
+onValue(patternsRef, (snapshot) => {
+  patterns = snapshot.val() || {};
+  rerenderAll();
+}, (error) => {
+  showToast('정기 패턴 읽기 오류: ' + error.message + ' (Firebase 규칙에 patterns 경로 허용 필요)', true);
+});
 onValue(tasksRef, (snapshot) => {
   tasks = snapshot.val() || {};
   setSyncStatus('connected');
-  renderCalendar();
-  if (document.getElementById('tab-list').style.display !== 'none') renderList();
+  rerenderAll();
 }, (error) => {
   setSyncStatus('');
   showToast('연결 오류: ' + error.message, true);
@@ -527,8 +673,8 @@ function statusMark(t){
 }
 function chipHTML(t, ds, small){
   const c = CAT(t.category); const cls = taskClass(t);
-  return `<div class="task-chip cat${cls==='done'?' is-done':''}${cls==='late'?' is-late':''}" style="${catVars(t.category)}${small?';font-size:9px;padding:2px 4px':''}" title="[${t.category||'기타'}] ${escH(t.text)} · ${t.status||''}" onclick="openDayModal('${ds}',event)">
-    <span class="cat-ic">${c.ic}</span>${statusMark(t)}<span class="tx">${escH(t.text)}</span></div>`;
+  return `<div class="task-chip cat${cls==='done'?' is-done':''}${cls==='late'?' is-late':''}${t._virtual?' virt':''}" style="${catVars(t.category)}${small?';font-size:9px;padding:2px 4px':''}" title="[${t.category||'기타'}] ${escH(t.text)} · ${t.status||''}" onclick="openDayModal('${ds}',event)">
+    <span class="cat-ic">${c.ic}</span>${t.patternId?'<span class="rp">↻</span>':''}${statusMark(t)}<span class="tx">${escH(t.text)}</span></div>`;
 }
 let calCatFilter = '';
 window.setCalCat = k => { calCatFilter = calCatFilter===k ? '' : k; renderCalendar(); };
@@ -639,6 +785,233 @@ const holTitle = h => [
 ].join('\n');
 const holTag = h => h ? `<span class="hol-label${h.us?'':' ga-only'}${h.ga?'':' us-only'}" title="${escH(holTitle(h))}">${h.us?'<b class="hb us">US</b>':''}${h.ga?`<b class="hb ga${h.ga.est?' est':''}">GA</b>`:''}${escH(holName(h))}</span>` : '';
 
+/* ── 정기 Task 패턴 엔진 ─────────────────────────────────────────
+   patterns/{id}: {text, category, worker, priority, memo, active,
+                   freq:'weekly'|'monthly', interval, days:[0-6], mday:1-31|'last',
+                   start, end, holiday:'keep'|'skip'|'prev'|'next', skip:{날짜:true}}
+   정기 일정은 저장하지 않고 화면에서 계산(가상 Task). 상태 변경·수정 시 그 1건만
+   tasks에 {patternId, occDate} 와 함께 저장 → 이후엔 저장본이 가상본을 대신함 */
+const DOW_KO = ['일','월','화','수','목','금','토'];
+const parseD = ds => new Date(ds+'T00:00:00');
+const mondayOf = d => addDays(d, -((d.getDay()+6)%7));
+const isOffDay = ds => { const d=parseD(ds).getDay(); return d===0 || d===6 || !!getHoliday(ds); };
+function shiftBiz(ds, dir){ let d=parseD(ds); do { d=addDays(d,dir); } while (isOffDay(ymd(d))); return ymd(d); }
+
+// 패턴 p의 [from,to] 구간 '원래 날짜(occ)' 목록 — 휴일 이동 전
+function patternOccs(p, from, to){
+  const out = [];
+  if (!p || !p.start) return out;
+  const lo = from > p.start ? from : p.start;
+  const hi = (p.end && p.end < to) ? p.end : to;
+  if (lo > hi) return out;
+  const iv = Math.max(1, +p.interval || 1);
+  const st = parseD(p.start);
+  if (p.freq === 'monthly') {
+    let y = parseD(lo).getFullYear(), m = parseD(lo).getMonth();
+    const hy = parseD(hi).getFullYear(), hm = parseD(hi).getMonth();
+    while (y < hy || (y === hy && m <= hm)) {
+      const diff = (y - st.getFullYear())*12 + (m - st.getMonth());
+      if (diff >= 0 && diff % iv === 0) {
+        const last = new Date(y, m+1, 0).getDate();
+        const dd = p.mday === 'last' ? last : Math.min(+p.mday || 1, last);   // 31일 지정 → 짧은 달은 말일
+        const ds = ymd(new Date(y, m, dd));
+        if (ds >= lo && ds <= hi) out.push(ds);
+      }
+      if (++m > 11) { m = 0; y++; }
+    }
+  } else {
+    const days = (p.days || []).map(Number);
+    const w0 = mondayOf(st);
+    for (let d = parseD(lo); ymd(d) <= hi; d = addDays(d, 1)) {
+      if (!days.includes(d.getDay())) continue;
+      const wk = Math.round((mondayOf(d) - w0) / 604800000);
+      if (wk % iv === 0) out.push(ymd(d));
+    }
+  }
+  return out;
+}
+// 원래 날짜 → 실제 표시 날짜 (휴일 처리 적용). null = 건너뜀
+function applyHoliday(p, occ){
+  if (!p.holiday || p.holiday === 'keep' || !getHoliday(occ)) return occ;
+  if (p.holiday === 'skip') return null;
+  return shiftBiz(occ, p.holiday === 'prev' ? -1 : 1);
+}
+const vKey = (pid, occ) => `v~${pid}~${occ}`;
+function parseVKey(k){ if (!k || !k.startsWith('v~')) return null; const [, pid, occ] = k.split('~'); return {pid, occ}; }
+
+// 저장된 Task + 가상 정기 Task를 [key, task] 배열로 (가상은 from~to 구간만)
+function taskEntries(from, to){
+  const real = Object.entries(tasks).filter(([,t]) => t);
+  const done = new Set(real.filter(([,t]) => t.patternId).map(([,t]) => t.patternId+'|'+t.occDate));
+  const virt = [];
+  Object.entries(patterns).forEach(([pid, p]) => {
+    if (!p || p.active === false) return;
+    // 휴일 이동 때문에 앞뒤로 여유 있게 계산
+    patternOccs(p, ymd(addDays(parseD(from), -10)), ymd(addDays(parseD(to), 10))).forEach(occ => {
+      if ((p.skip && p.skip[occ]) || done.has(pid+'|'+occ)) return;
+      const dl = applyHoliday(p, occ);
+      if (!dl || dl < from || dl > to) return;
+      virt.push([vKey(pid, occ), {
+        text: p.text, deadline: dl, worker: p.worker || '', category: p.category,
+        priority: p.priority || '보통', status: '예정',
+        patternId: pid, occDate: occ, _virtual: true, _shifted: dl !== occ,
+      }]);
+    });
+  });
+  return real.concat(virt);
+}
+// 목록 탭 구간: 월 필터 있으면 그 달, 없으면 오늘 -14일 ~ +60일 (정기 Task만 해당, 일반 Task는 전부)
+function listRange(fm){
+  if (fm) { const y=curYear, m=+fm-1; return [ymd(new Date(y,m,1)), ymd(new Date(y,m+1,0))]; }
+  return [ymd(addDays(today,-14)), ymd(addDays(today,60))];
+}
+// 가상 Task면 실제 Task로 저장(+변경), 아니면 그냥 update
+async function writeTask(key, changes){
+  const v = parseVKey(key);
+  if (!v) return update(ref(db, 'tasks/'+key), changes);
+  const p = patterns[v.pid] || {};
+  return push(tasksRef, {
+    text: p.text||'', deadline: applyHoliday(p, v.occ) || v.occ, worker: p.worker||'',
+    category: p.category||'기타', priority: p.priority||'보통', status: '예정',
+    patternId: v.pid, occDate: v.occ, createdAt: new Date().toISOString(),
+    ...changes,
+  });
+}
+
+/* ── 정기 패턴 화면 ── */
+const HOL_TXT = {keep:'그대로', skip:'건너뜀', prev:'전 영업일', next:'다음 영업일'};
+function cycleText(p){
+  const iv = Math.max(1, +p.interval||1);
+  if (p.freq === 'monthly') {
+    const d = p.mday === 'last' ? '말일' : `${p.mday}일`;
+    return (iv===1 ? '매월 ' : `${iv}개월마다 `) + d;
+  }
+  const order = [1,2,3,4,5,6,0];
+  const ds = order.filter(x => (p.days||[]).map(Number).includes(x)).map(x => DOW_KO[x]).join('·') || '-';
+  return (iv===1 ? '매주 ' : `${iv}주마다 `) + ds;
+}
+function nextOccs(p, n){
+  const res = []; let from = ymd(today);
+  for (let guard=0; guard<12 && res.length<n; guard++) {
+    const to = ymd(addDays(parseD(from), 120));
+    patternOccs(p, from, to).forEach(occ => {
+      if (res.length>=n || (p.skip && p.skip[occ])) return;
+      const dl = applyHoliday(p, occ); if (dl && dl >= ymd(today)) res.push({occ, dl});
+    });
+    from = ymd(addDays(parseD(to), 1));
+  }
+  return res;
+}
+const fmtMD = ds => { const d=parseD(ds); return `${d.getMonth()+1}/${d.getDate()}(${DOW_KO[d.getDay()]})`; };
+window.renderPatterns = function(){
+  const body = document.getElementById('patternBody'); if (!body) return;
+  const list = Object.entries(patterns).filter(([,p])=>p)
+    .sort((a,b) => (CATS.indexOf(CAT(a[1].category)) - CATS.indexOf(CAT(b[1].category))) || String(a[1].text).localeCompare(String(b[1].text)));
+  if (!list.length) { body.innerHTML = `<tr><td colspan="8"><div class="empty"><div class="empty-icon">🔁</div><div>등록된 정기 패턴이 없습니다</div></div></td></tr>`; return; }
+  body.innerHTML = list.map(([id,p]) => {
+    const nx = p.active===false ? [] : nextOccs(p, 1);
+    return `<tr class="${p.active===false?'off':''}">
+      <td><input type="checkbox" ${p.active!==false?'checked':''} onchange="togglePattern('${id}',this.checked)" title="사용/중지"></td>
+      <td><b>${escH(p.text)}</b>${p.memo?`<div class="pt-note" style="margin:0">${escH(p.memo)}</div>`:''}</td>
+      <td>${catBadge(CAT(p.category).k)}</td>
+      <td style="white-space:nowrap">${cycleText(p)}</td>
+      <td>${escH(p.worker||'')}</td>
+      <td style="white-space:nowrap">${p.start} ~ ${p.end||'계속'}</td>
+      <td class="nx">${nx.length ? fmtMD(nx[0].dl) + (nx[0].dl!==nx[0].occ?' <span title="휴일로 이동">⤳</span>':'') : '-'}</td>
+      <td class="act"><button class="pt-btn" onclick="openPatternForm('${id}')">수정</button><button class="pt-btn del" onclick="deletePattern('${id}')">삭제</button></td>
+    </tr>`;
+  }).join('');
+};
+function initPatternForm(){
+  document.getElementById('pt-cat').innerHTML = catOptions('기타');
+  document.getElementById('pt-interval').innerHTML = [1,2,3,4].map(n=>`<option value="${n}">${n===1?'매번':n+'회마다'}</option>`).join('');
+  document.getElementById('pt-mday').innerHTML = Array.from({length:31},(_,i)=>`<option value="${i+1}">${i+1}일</option>`).join('') + '<option value="last">말일</option>';
+}
+initPatternForm();
+window.ptFreqUI = () => {
+  const m = document.getElementById('pt-freq').value === 'monthly';
+  document.getElementById('pt-weekly-row').style.display = m ? 'none' : '';
+  document.getElementById('pt-monthly-row').style.display = m ? '' : 'none';
+  const ivSel = document.getElementById('pt-interval'), cur = ivSel.value;
+  ivSel.innerHTML = [1,2,3,4].map(n=>`<option value="${n}">${n===1?(m?'매월':'매주'):(m?n+'개월마다':n+'주마다')}</option>`).join('');
+  ivSel.value = cur;
+};
+function readPatternForm(){
+  return {
+    text: document.getElementById('pt-text').value.trim(),
+    category: document.getElementById('pt-cat').value,
+    worker: document.getElementById('pt-worker').value.trim(),
+    priority: document.getElementById('pt-prio').value,
+    memo: document.getElementById('pt-memo').value.trim(),
+    freq: document.getElementById('pt-freq').value,
+    interval: +document.getElementById('pt-interval').value,
+    days: [...document.querySelectorAll('#pt-days input:checked')].map(i=>+i.value),
+    mday: (v => v==='last' ? 'last' : +v)(document.getElementById('pt-mday').value),
+    start: document.getElementById('pt-start').value,
+    end: document.getElementById('pt-end').value || '',
+    holiday: 'keep',
+  };
+}
+window.ptPreview = () => {
+  const p = readPatternForm(), el = document.getElementById('pt-preview');
+  if (!p.start || (p.freq==='weekly' && !p.days.length)) { el.innerHTML = '요일(또는 날짜)과 시작일을 정하면 다음 일정이 미리 보입니다.'; return; }
+  const id = document.getElementById('pt-id').value;
+  if (id && patterns[id]) p.skip = patterns[id].skip;
+  const nx = nextOccs({...p, start: p.start}, 6);
+  el.innerHTML = `<b>${cycleText(p)}</b> · 다음 일정: ` + (nx.length ? nx.map(o => fmtMD(o.dl) + (o.dl!==o.occ?`<span title="${fmtMD(o.occ)} 휴일 → 이동">⤳</span>`:'')).join(', ') : '없음');
+};
+window.openPatternForm = (id) => {
+  const p = (id && patterns[id]) || {freq:'weekly', interval:1, days:[], mday:1, start: ymd(today), end:'', holiday:'keep', category:'출하', priority:'보통'};
+  document.getElementById('ptFormTitle').textContent = id ? '정기 패턴 수정' : '정기 패턴 추가';
+  document.getElementById('pt-id').value = id || '';
+  document.getElementById('pt-text').value = p.text || '';
+  document.getElementById('pt-cat').value = CAT(p.category).k; catPreview('pt-cat','pt-cat-pv');
+  document.getElementById('pt-worker').value = p.worker || '';
+  document.getElementById('pt-prio').value = p.priority || '보통';
+  document.getElementById('pt-memo').value = p.memo || '';
+  document.getElementById('pt-freq').value = p.freq || 'weekly';
+  ptFreqUI();
+  document.getElementById('pt-interval').value = String(p.interval || 1);
+  document.querySelectorAll('#pt-days input').forEach(i => i.checked = (p.days||[]).map(Number).includes(+i.value));
+  document.getElementById('pt-mday').value = String(p.mday || 1);
+  document.getElementById('pt-start').value = p.start || ymd(today);
+  document.getElementById('pt-end').value = p.end || '';
+  ptPreview();
+  document.getElementById('patternModal').classList.add('open');
+};
+window.closePatternForm = () => document.getElementById('patternModal').classList.remove('open');
+window.savePattern = async () => {
+  const p = readPatternForm(), id = document.getElementById('pt-id').value;
+  if (!p.text) { showToast('Task 내용을 입력하세요', true); return; }
+  if (!p.start) { showToast('시작일을 입력하세요', true); return; }
+  if (p.freq==='weekly' && !p.days.length) { showToast('요일을 하나 이상 선택하세요', true); return; }
+  if (p.end && p.end < p.start) { showToast('종료일이 시작일보다 빠릅니다', true); return; }
+  if (p.freq==='weekly') delete p.mday; else delete p.days;
+  const btn = document.getElementById('ptSaveBtn'); btn.disabled = true;
+  setSyncStatus('syncing');
+  try {
+    if (id) await update(ref(db, 'patterns/'+id), {...p, mday: p.mday ?? null, days: p.days ?? null, updatedAt: new Date().toISOString()});
+    else    await push(patternsRef, {...p, active: true, createdAt: new Date().toISOString()});
+    showToast(id ? '✅ 정기 패턴 수정됨' : '✅ 정기 패턴 추가됨');
+    closePatternForm();
+  } catch(e) { showToast('저장 실패: ' + e.message, true); }
+  setSyncStatus('connected'); btn.disabled = false;
+};
+window.togglePattern = async (id, on) => {
+  setSyncStatus('syncing');
+  await update(ref(db, 'patterns/'+id), {active: on});
+  setSyncStatus('connected');
+  showToast(on ? '▶ 정기 패턴 사용' : '⏸ 정기 패턴 중지');
+};
+window.deletePattern = async (id) => {
+  const p = patterns[id]; if (!p) return;
+  if (!confirm(`정기 패턴 "${p.text}"을(를) 삭제할까요?\n앞으로의 자동 일정이 사라집니다. (완료 처리 등으로 이미 저장된 Task는 남습니다)`)) return;
+  setSyncStatus('syncing');
+  await remove(ref(db, 'patterns/'+id));
+  setSyncStatus('connected');
+  showToast('🗑 정기 패턴 삭제됨');
+};
+
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -647,12 +1020,13 @@ function showToast(msg, isError=false) {
 }
 
 window.switchTab = (name, btn) => {
-  ['calendar','list','add'].forEach(t => {
+  ['calendar','list','add','pattern'].forEach(t => {
     document.getElementById('tab-'+t).style.display = t===name?'block':'none';
   });
   document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if (name==='list') renderList();
+  if (name==='pattern') renderPatterns();
 };
 
 window.changeMonth = (d) => {
@@ -673,7 +1047,8 @@ function renderCalendar() {
   calStart.setDate(calStart.getDate()-startDow);
 
   const byDate = {};
-  const taskList = Object.entries(tasks);
+  const calEnd = new Date(calStart); calEnd.setDate(calEnd.getDate()+41);
+  const taskList = taskEntries(ymd(calStart), ymd(calEnd));
   taskList.forEach(([key, t]) => {
     if (!t || !t.deadline) return;
     if (!byDate[t.deadline]) byDate[t.deadline] = [];
@@ -783,7 +1158,7 @@ window.openDayModal = (ds, e) => {
       <div><b class="hb ga">GA</b> ${h.ga?`<b style="color:#c2410c">${h.ga.ko}</b> · ${h.ga.en}${h.ga.est?' <span style="color:var(--text3)">(추정 · 주지사 공표 전)</span>':''}`:'<span style="color:var(--text3)">조지아 주 근무일</span>'}</div>
     </div>`:''); }
 
-  const dayTasks = Object.entries(tasks)
+  const dayTasks = taskEntries(ds, ds)
     .filter(([,t])=>t&&t.deadline===ds)
     .map(([k,t])=>({...t,_key:k}));
 
@@ -809,6 +1184,7 @@ window.openDayModal = (ds, e) => {
         <div class="modal-task-text">${t.text}</div>
         <div class="modal-task-meta">
           ${catBadge(CAT(t.category).k)}
+          ${t.patternId?`<span class="pattern-tag" title="정기 패턴에서 생성${t._virtual?' (아직 저장 전)':''}">↻ 정기${t._shifted?' · 휴일로 이동':''}</span>`:''}
           ${t.worker?`<span class="meta-chip">👤 ${t.worker}</span>`:''}
           ${t.priority?`<span class="meta-chip">${t.priority}</span>`:''}
           <span class="meta-chip" style="color:${ddColor}">${ddTxt}</span>
@@ -856,7 +1232,7 @@ window.saveEdit = async (key, ds) => {
   const priority = document.getElementById('edit-prio-'+key).value;
   if (!text || !deadline) { showToast('내용과 마감일을 입력하세요', true); return; }
   setSyncStatus('syncing');
-  await update(ref(db, 'tasks/'+key), { text, deadline, worker, category, priority });
+  await writeTask(key, { text, deadline, worker, category, priority });
   setSyncStatus('connected');
   showToast('✅ 수정됐어요!');
   openDayModal(ds, null);
@@ -864,16 +1240,22 @@ window.saveEdit = async (key, ds) => {
 
 window.updateStatus = async (key, val, ds) => {
   setSyncStatus('syncing');
-  await update(ref(db, 'tasks/'+key), {status: val});
+  await writeTask(key, {status: val});
   setSyncStatus('connected');
   showToast('✓ 상태 업데이트됨');
   openDayModal(ds, null);
 };
 
 window.deleteTask = async (key, ds) => {
-  if (!confirm('이 Task를 삭제할까요?')) return;
+  const vt = parseVKey(key), real = tasks[key];
+  const isPat = vt || (real && real.patternId);
+  if (!confirm(isPat ? '이 날짜의 정기 Task만 삭제(건너뛰기)할까요?\n패턴 전체를 지우려면 [🔁 정기 패턴] 탭에서 삭제하세요.' : '이 Task를 삭제할까요?')) return;
   setSyncStatus('syncing');
-  await remove(ref(db, 'tasks/'+key));
+  if (vt) await update(ref(db, `patterns/${vt.pid}/skip`), {[vt.occ]: true});
+  else {
+    if (real && real.patternId && real.occDate) await update(ref(db, `patterns/${real.patternId}/skip`), {[real.occDate]: true});
+    await remove(ref(db, 'tasks/'+key));
+  }
   setSyncStatus('connected');
   showToast('🗑 Task 삭제됨');
   openDayModal(ds, null);
@@ -914,7 +1296,7 @@ function renderList() {
   const fs = document.getElementById('filterStatus').value;
   const fm = document.getElementById('filterMonth').value;
   const fc = document.getElementById('filterCat').value;
-  let list = Object.entries(tasks)
+  let list = taskEntries(...listRange(fm))
     .filter(([,t])=>t&&t.deadline)
     .map(([k,t])=>({...t,_key:k}));
   if (fs) list = list.filter(t=>t.status===fs);
@@ -937,7 +1319,7 @@ function renderList() {
     ? list.map(t=>`
       <div class="list-item cat" style="${catVars(t.category)}">
         <div>
-          <div class="list-text"><span style="color:${CAT(t.category).c};margin-right:4px">${CAT(t.category).ic}</span>${t.text}</div>
+          <div class="list-text"><span style="color:${CAT(t.category).c};margin-right:4px">${CAT(t.category).ic}</span>${t.patternId?'<span class="pattern-tag" style="margin-right:5px">↻ 정기</span>':''}${escH(t.text)}</div>
           <div class="list-meta">${t.worker||''} ${t.worker&&t.category?'·':''} ${t.category||''}</div>
         </div>
         <div class="list-meta">${t.deadline}</div>
@@ -957,7 +1339,7 @@ function getFilteredList() {
   const fs = document.getElementById('filterStatus').value;
   const fm = document.getElementById('filterMonth').value;
   const fc = document.getElementById('filterCat').value;
-  let list = Object.entries(tasks)
+  let list = taskEntries(...listRange(fm))
     .filter(([,t])=>t&&t.deadline)
     .map(([k,t])=>({...t,_key:k}));
   if (fs) list = list.filter(t=>t.status===fs);
@@ -1059,7 +1441,7 @@ window.downloadExcel = () => {
 
 window.updateStatusList = async (key, val) => {
   setSyncStatus('syncing');
-  await update(ref(db,'tasks/'+key), {status:val});
+  await writeTask(key, {status:val});
   setSyncStatus('connected');
   showToast('✓ 상태 업데이트됨');
 };
