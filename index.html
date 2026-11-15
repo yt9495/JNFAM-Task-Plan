@@ -1,8 +1,5 @@
 <!DOCTYPE html>
-<!--
-  © 2025–2026 Young Tai Kang. All rights reserved.
-  Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited.
--->
+<!-- © 2025–2026 Young Tai Kang. All rights reserved. Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited. -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -259,6 +256,15 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .pt-note{font-size:11px;color:var(--text3);margin-top:4px;}
 .pattern-tag{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;color:var(--accent);background:var(--accent-l);border:1px solid #bfdbfe;border-radius:4px;padding:1px 6px;}
 
+/* ── 출하 정보 (AR 청구 확인 연동) ── */
+.ship-box{background:#fff5f5;border:1px dashed #fecaca;border-radius:10px;padding:12px 14px 2px;margin-bottom:14px;}
+.ship-h{font-size:12px;font-weight:800;color:var(--red);margin-bottom:10px;}
+.ship-h span{font-weight:500;color:var(--text3);}
+.ship-chk{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--text2);margin:2px 0 10px;cursor:pointer;}
+.task-chip .ar{flex-shrink:0;font-size:9px;font-weight:800;border-radius:3px;padding:0 3px;line-height:13px;}
+.ar.ok{background:#dcfce7;color:#15803d;} .ar.hold{background:#fef3c7;color:#b45309;} .ar.no{background:#e2e8f0;color:#475569;}
+.meta-chip.ar-ok{background:#dcfce7;color:#15803d;border-color:#bbf7d0;} .meta-chip.ar-hold{background:#fef3c7;color:#b45309;border-color:#fde68a;}
+
 /* LOADING */
 .loading{display:flex;align-items:center;justify-content:center;padding:60px;gap:12px;color:var(--text3);font-size:13px;}
 .spinner{width:20px;height:20px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite;}
@@ -398,7 +404,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
         <div>
           <label class="form-label">Task 종류 *</label>
           <div class="cat-select-wrap">
-            <select class="form-select" id="inp-cat" onchange="catPreview('inp-cat','inp-cat-pv')"></select>
+            <select class="form-select" id="inp-cat" onchange="catPreview('inp-cat','inp-cat-pv');shipToggle('inp-cat','inp-ship')"></select>
             <span class="cat-badge cat-preview" id="inp-cat-pv"></span>
           </div>
         </div>
@@ -408,6 +414,18 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
             <option>높음</option><option>보통</option><option>낮음</option>
           </select>
         </div>
+      </div>
+      <div class="ship-box" id="inp-ship">
+        <div class="ship-h">🚚 출하 정보 <span>— AR Manager 청구 확인에 사용됩니다</span></div>
+        <div class="form-row">
+          <div><label class="form-label">고객</label><input class="form-input" id="inp-customer" list="custList" placeholder="예: Qcells"/></div>
+          <div><label class="form-label">품목</label><select class="form-select" id="inp-product"></select></div>
+        </div>
+        <div class="form-row">
+          <div><label class="form-label">계획 수량</label><div class="cat-select-wrap"><input class="form-input" id="inp-qty" type="number" step="any" placeholder="선택"/><select class="form-select" id="inp-unit" style="max-width:80px;flex:none"><option>lb</option><option>Kg</option></select></div></div>
+          <div><label class="form-label">고객 PO#</label><input class="form-input" id="inp-po" placeholder="선택"/></div>
+        </div>
+        <label class="ship-chk"><input type="checkbox" id="inp-billable" checked> 청구 대상 (인보이스 발행 필요)</label>
       </div>
       <div class="form-row single">
         <div>
@@ -464,13 +482,24 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
       <div>
         <label class="form-label">Task 종류 *</label>
         <div class="cat-select-wrap">
-          <select class="form-select" id="pt-cat" onchange="catPreview('pt-cat','pt-cat-pv')"></select>
+          <select class="form-select" id="pt-cat" onchange="catPreview('pt-cat','pt-cat-pv');shipToggle('pt-cat','pt-ship')"></select>
           <span class="cat-badge cat-preview" id="pt-cat-pv"></span>
         </div>
       </div>
       <div>
         <label class="form-label">담당자</label>
         <input class="form-input" id="pt-worker" placeholder="이름 입력"/>
+      </div>
+    </div>
+    <div class="ship-box" id="pt-ship">
+      <div class="ship-h">🚚 출하 정보 <span>— AR Manager 청구 확인에 사용됩니다</span></div>
+      <div class="form-row">
+        <div><label class="form-label">고객</label><input class="form-input" id="pt-customer" list="custList" placeholder="예: Qcells"/></div>
+        <div><label class="form-label">품목</label><select class="form-select" id="pt-product"></select></div>
+      </div>
+      <div class="form-row">
+        <div><label class="form-label">고객 PO#</label><input class="form-input" id="pt-po" placeholder="선택"/></div>
+        <div style="align-self:end"><label class="ship-chk"><input type="checkbox" id="pt-billable" checked> 청구 대상 (인보이스 발행 필요)</label></div>
       </div>
     </div>
     <div class="form-row">
@@ -565,6 +594,7 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 </div>
 
 <div class="toast" id="toast"></div>
+<datalist id="custList"><option value="Qcells"><option value="Jefferson (CSI)"><option value="Korechem"><option value="Suniva"></datalist>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -618,6 +648,8 @@ onValue(patternsRef, (snapshot) => {
 }, (error) => {
   showToast('정기 패턴 읽기 오류: ' + error.message + ' (Firebase 규칙에 patterns 경로 허용 필요)', true);
 });
+// AR Manager 청구 결과 (읽기 전용 표시) — 규칙에 arLinks가 없으면 조용히 건너뜀
+onValue(ref(db, 'arLinks'), (snapshot) => { arLinks = snapshot.val() || {}; rerenderAll(); }, () => {});
 onValue(tasksRef, (snapshot) => {
   tasks = snapshot.val() || {};
   setSyncStatus('connected');
@@ -678,7 +710,7 @@ function statusMark(t){
 function chipHTML(t, ds, small){
   const c = CAT(t.category); const cls = taskClass(t);
   return `<div class="task-chip cat${cls==='done'?' is-done':''}${cls==='late'?' is-late':''}${t._virtual?' virt':''}" style="${catVars(t.category)}${small?';font-size:9px;padding:2px 4px':''}" title="[${t.category||'기타'}] ${escH(t.text)} · ${t.status||''}" onclick="openDayModal('${ds}',event)">
-    <span class="cat-ic">${c.ic}</span>${t.patternId?'<span class="rp">↻</span>':''}${statusMark(t)}<span class="tx">${escH(t.text)}</span></div>`;
+    <span class="cat-ic">${c.ic}</span>${t.patternId?'<span class="rp">↻</span>':''}${statusMark(t)}${arChip(t)}<span class="tx">${escH(t.text)}</span></div>`;
 }
 let calCatFilter = '';
 window.setCalCat = k => { calCatFilter = calCatFilter===k ? '' : k; renderCalendar(); };
@@ -687,8 +719,49 @@ window.catPreview = (selId, pvId) => {
   const c=CAT(sel.value); pv.setAttribute('style',catVars(c.k)); pv.textContent=`${c.ic} ${c.k}`;
   sel.style.color=c.c; sel.style.fontWeight='700';
 };
+/* ── 출하 정보 (고객·품목·계획 수량·PO·청구 대상) — AR Manager "출하 → 청구 확인"에서 사용 ── */
+const SHIP_PRODUCTS = ['HF','HCl','HNO3','H2SO4','KOH','기타'];
+const prodOptions = sel => `<option value="">— (Task 내용에서 인식)</option>` + SHIP_PRODUCTS.map(p=>`<option value="${p}"${p===sel?' selected':''}>${p}</option>`).join('');
+window.shipToggle = (catId, boxId) => { const s=document.getElementById(catId), b=document.getElementById(boxId); if(s&&b) b.style.display = s.value==='출하' ? '' : 'none'; };
+// prefix-customer / -product / -qty / -unit / -po / -billable → only fields present in the form
+function readShip(prefix){
+  const g = k => document.getElementById(prefix+'-'+k), o = {};
+  if (g('customer')) o.customer = g('customer').value.trim();
+  if (g('product'))  o.product  = g('product').value;
+  if (g('qty'))      o.qty      = g('qty').value==='' ? '' : +g('qty').value;
+  if (g('unit'))     o.unit     = g('unit').value;
+  if (g('po'))       o.poNo     = g('po').value.trim();
+  if (g('billable')) o.billable = g('billable').checked;
+  return o;
+}
+const shipEditHTML = (p, t) => `
+  <div class="edit-row"><input class="edit-input" id="${p}-customer" list="custList" value="${escH(t.customer||'')}" placeholder="고객 (예: Qcells)"/><select class="edit-input" id="${p}-product">${prodOptions(t.product||'')}</select></div>
+  <div class="edit-row"><input class="edit-input" id="${p}-qty" type="number" step="any" value="${t.qty??''}" placeholder="계획 수량"/><select class="edit-input" id="${p}-unit" style="flex:0 0 70px">${['lb','Kg'].map(u=>`<option${u===(t.unit||'lb')?' selected':''}>${u}</option>`).join('')}</select><input class="edit-input" id="${p}-po" value="${escH(t.poNo||'')}" placeholder="고객 PO#"/></div>
+  <label class="ship-chk"><input type="checkbox" id="${p}-billable" ${t.billable===false?'':'checked'}> 청구 대상 (인보이스 발행 필요)</label>`;
+// AR Manager writes its decision to arLinks/{key}; key = p~patternId~occDate for recurring shipments
+let arLinks = {};
+const AR_START = '2026-11-01';   // AR Manager checks shipments from this date (AR_CONFIG.shipStart)
+const arKey = t => t.patternId && t.occDate ? `p~${t.patternId}~${t.occDate}` : t._key;
+function arChip(t){
+  if (CAT(t.category).k!=='출하') return '';
+  const l = arLinks[arKey(t)];
+  if (l && l.status==='invoiced') return `<span class="ar ok" title="청구 완료 ${escH((l.invoiceNos||[]).join(', '))}">🧾</span>`;
+  if (l && l.status==='hold')     return `<span class="ar hold" title="청구 보류: ${escH(l.reason||'')}">⏸</span>`;
+  if ((l && l.status==='nobill') || t.billable===false) return `<span class="ar no" title="청구 불필요${l&&l.reason?': '+escH(l.reason):''}">–</span>`;
+  return '';
+}
+function arMeta(t){
+  if (CAT(t.category).k!=='출하') return '';
+  const l = arLinks[arKey(t)];
+  if (l && l.status==='invoiced') return `<span class="meta-chip ar-ok">🧾 ${escH((l.invoiceNos||[]).join(', ')||'청구 완료')}</span>`;
+  if (l && l.status==='hold')     return `<span class="meta-chip ar-hold">⏸ 청구 보류 · ${escH(l.reason||'')}</span>`;
+  if (l && l.status==='nobill')   return `<span class="meta-chip">청구 불필요 · ${escH(l.reason||'')}</span>`;
+  if (t.billable===false)         return `<span class="meta-chip">청구 대상 아님</span>`;
+  return (t.deadline >= AR_START && diffDays(t.deadline) <= 0 && t.status !== '보류') ? `<span class="meta-chip" style="color:var(--red)">미청구</span>` : '';
+}
 function initCatSelects(){
-  const inp=document.getElementById('inp-cat'); if(inp){ inp.innerHTML=catOptions('출하'); catPreview('inp-cat','inp-cat-pv'); }
+  ['inp-product','pt-product'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=prodOptions(''); });
+  const inp=document.getElementById('inp-cat'); if(inp){ inp.innerHTML=catOptions('출하'); catPreview('inp-cat','inp-cat-pv'); shipToggle('inp-cat','inp-ship'); }
   const f=document.getElementById('filterCat'); if(f){ f.innerHTML='<option value="">전체 카테고리</option>'+CATS.map(c=>`<option value="${c.k}" style="color:${c.c}">${c.ic} ${c.k}</option>`).join(''); }
 }
 initCatSelects();
@@ -857,7 +930,7 @@ function taskEntries(from, to){
       if (!dl || dl < from || dl > to) return;
       virt.push([vKey(pid, occ), {
         text: p.text, deadline: dl, worker: p.worker || '', category: p.category,
-        priority: p.priority || '보통', status: '예정',
+        priority: p.priority || '보통', status: '예정', ...patternShip(p),
         patternId: pid, occDate: occ, _virtual: true, _shifted: dl !== occ,
       }]);
     });
@@ -876,10 +949,15 @@ async function writeTask(key, changes){
   const p = patterns[v.pid] || {};
   return push(tasksRef, {
     text: p.text||'', deadline: applyHoliday(p, v.occ) || v.occ, worker: p.worker||'',
-    category: p.category||'기타', priority: p.priority||'보통', status: '예정',
+    category: p.category||'기타', priority: p.priority||'보통', status: '예정', ...patternShip(p),
     patternId: v.pid, occDate: v.occ, createdAt: new Date().toISOString(),
     ...changes,
   });
+}
+// 정기 패턴의 출하 정보 → 개별 Task로 복사 (Firebase는 undefined 값을 저장하지 않으므로 기본값 사용)
+function patternShip(p){
+  if (CAT(p.category).k!=='출하') return {};
+  return { customer: p.customer||'', product: p.product||'', poNo: p.poNo||'', billable: p.billable!==false };
 }
 
 /* ── 정기 패턴 화면 ── */
@@ -954,6 +1032,7 @@ function readPatternForm(){
     start: document.getElementById('pt-start').value,
     end: document.getElementById('pt-end').value || '',
     holiday: 'keep',
+    ...(document.getElementById('pt-cat').value==='출하' ? readShip('pt') : {}),
   };
 }
 window.ptPreview = () => {
@@ -969,7 +1048,11 @@ window.openPatternForm = (id) => {
   document.getElementById('ptFormTitle').textContent = id ? '정기 패턴 수정' : '정기 패턴 추가';
   document.getElementById('pt-id').value = id || '';
   document.getElementById('pt-text').value = p.text || '';
-  document.getElementById('pt-cat').value = CAT(p.category).k; catPreview('pt-cat','pt-cat-pv');
+  document.getElementById('pt-cat').value = CAT(p.category).k; catPreview('pt-cat','pt-cat-pv'); shipToggle('pt-cat','pt-ship');
+  document.getElementById('pt-customer').value = p.customer || '';
+  document.getElementById('pt-product').value = p.product || '';
+  document.getElementById('pt-po').value = p.poNo || '';
+  document.getElementById('pt-billable').checked = p.billable !== false;
   document.getElementById('pt-worker').value = p.worker || '';
   document.getElementById('pt-prio').value = p.priority || '보통';
   document.getElementById('pt-memo').value = p.memo || '';
@@ -1191,6 +1274,8 @@ window.openDayModal = (ds, e) => {
           ${t.patternId?`<span class="pattern-tag" title="정기 패턴에서 생성${t._virtual?' (아직 저장 전)':''}">↻ 정기${t._shifted?' · 휴일로 이동':''}</span>`:''}
           ${t.worker?`<span class="meta-chip">👤 ${t.worker}</span>`:''}
           ${t.priority?`<span class="meta-chip">${t.priority}</span>`:''}
+          ${CAT(t.category).k==='출하' && (t.customer||t.product||t.qty) ? `<span class="meta-chip">${escH([t.customer, t.product, t.qty?Number(t.qty).toLocaleString()+' '+(t.unit||''):'', t.poNo?'PO '+t.poNo:''].filter(Boolean).join(' · '))}</span>`:''}
+          ${arMeta(t)}
           <span class="meta-chip" style="color:${ddColor}">${ddTxt}</span>
           <select class="status-select" onchange="updateStatus('${t._key}',this.value,'${ds}')">
             ${['예정','진행중','완료','보류'].map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('')}
@@ -1203,9 +1288,10 @@ window.openDayModal = (ds, e) => {
             <input class="edit-input" id="edit-worker-${t._key}" value="${t.worker||''}" placeholder="담당자"/>
           </div>
           <div class="edit-row">
-            <select class="edit-input" id="edit-cat-${t._key}" style="color:${CAT(t.category).c};font-weight:700" onchange="this.style.color=CAT(this.value).c">${cats}</select>
+            <select class="edit-input" id="edit-cat-${t._key}" style="color:${CAT(t.category).c};font-weight:700" onchange="this.style.color=CAT(this.value).c;shipToggle(this.id,'es-${t._key}-ship')">${cats}</select>
             <select class="edit-input" id="edit-prio-${t._key}">${prios}</select>
           </div>
+          <div id="es-${t._key}-ship" style="display:${CAT(t.category).k==='출하'?'':'none'}">${shipEditHTML('es-'+t._key, t)}</div>
           <div class="edit-row">
             <button class="edit-save" onclick="saveEdit('${t._key}','${ds}')">💾 저장</button>
             <button class="edit-cancel" onclick="toggleEdit('${t._key}','${ds}')">취소</button>
@@ -1236,7 +1322,7 @@ window.saveEdit = async (key, ds) => {
   const priority = document.getElementById('edit-prio-'+key).value;
   if (!text || !deadline) { showToast('내용과 마감일을 입력하세요', true); return; }
   setSyncStatus('syncing');
-  await writeTask(key, { text, deadline, worker, category, priority });
+  await writeTask(key, { text, deadline, worker, category, priority, ...(category==='출하' ? readShip('es-'+key) : {}) });
   setSyncStatus('connected');
   showToast('✅ 수정됐어요!');
   openDayModal(ds, null);
@@ -1278,12 +1364,14 @@ window.addTask = async () => {
     category: document.getElementById('inp-cat').value,
     priority: document.getElementById('inp-prio').value,
     status:   document.getElementById('inp-status').value,
+    ...(document.getElementById('inp-cat').value==='출하' ? readShip('inp') : {}),
     createdAt: new Date().toISOString(),
   });
   setSyncStatus('connected');
   btn.disabled=false; btn.textContent='+ Task 추가';
   document.getElementById('inp-text').value='';
   document.getElementById('inp-worker').value='';
+  ['inp-qty','inp-po'].forEach(id=>document.getElementById(id).value='');
   showToast('✓ Task가 추가되었습니다!');
   const [y,m] = dl.split('-').map(Number);
   curYear=y; curMonth=m-1;
@@ -1324,7 +1412,7 @@ function renderList() {
       <div class="list-item cat" style="${catVars(t.category)}">
         <div>
           <div class="list-text"><span style="color:${CAT(t.category).c};margin-right:4px">${CAT(t.category).ic}</span>${t.patternId?'<span class="pattern-tag" style="margin-right:5px">↻ 정기</span>':''}${escH(t.text)}</div>
-          <div class="list-meta">${t.worker||''} ${t.worker&&t.category?'·':''} ${t.category||''}</div>
+          <div class="list-meta">${t.worker||''} ${t.worker&&t.category?'·':''} ${t.category||''}${t.customer?' · '+escH(t.customer):''} ${arMeta(t)}</div>
         </div>
         <div class="list-meta">${t.deadline}</div>
         <div class="dday ${ddClass(t)}">${ddText(t)}</div>
@@ -1723,6 +1811,8 @@ window.confirmImport = async () => {
       text: `${item.chem} 출하${qtyTxt}${timeTxt}`,
       deadline: item.date, worker: '',
       category: '출하', priority: '높음', status: '예정',
+      // 고객 스케줄(Qcells Chemical Demand Plan) → AR 청구 확인용 출하 정보
+      customer: 'Qcells', product: item.chem, qty: item.qty || '', unit: 'lb', poNo: '', billable: true,
       createdAt: new Date().toISOString(),
     });
     count++;
@@ -1753,7 +1843,5 @@ onValue(tasksRef, async (snap) => {
   }
 }, {onlyOnce: true});
 </script>
-<style>.ytk-copyright{text-align:center;font-size:11px;line-height:1.4;color:#8a8f98;padding:10px 12px;font-family:inherit}@media print{.ytk-copyright{display:none}}</style>
-<div class="ytk-copyright">© 2025–2026 Young Tai Kang. All rights reserved. Unauthorized use, copying, modification, or distribution without the written permission of Young Tai Kang is prohibited.</div>
 </body>
 </html>
