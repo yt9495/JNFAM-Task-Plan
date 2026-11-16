@@ -207,11 +207,60 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .btn-add-outline:hover{background:var(--accent-l);}
 
 /* LIST */
-.list-header{display:grid;grid-template-columns:2fr 1fr 80px 90px 100px;gap:10px;padding:8px 16px;margin-bottom:6px;}
-.list-hdr{font-size:11px;font-weight:700;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;}
-.list-item{display:grid;grid-template-columns:2fr 1fr 80px 90px 100px;gap:10px;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:5px;transition:border-color .15s;box-shadow:var(--shadow);}
+.list-header{display:grid;grid-template-columns:minmax(0,2fr) minmax(70px,.9fr) 74px 104px 122px 62px 84px 96px;gap:10px;padding:8px 16px;margin-bottom:6px;}
+.list-hdr{font-size:11px;font-weight:700;color:var(--text3);font-family:'IBM Plex Mono',monospace;letter-spacing:1px;white-space:nowrap;}
+.list-hdr.sortable{cursor:pointer;user-select:none;}
+.list-hdr.sortable:hover{color:var(--text);}
+.list-hdr.on{color:var(--accent);}
+.list-hdr.r,.list-item .r{text-align:right;}
+.list-item{display:grid;grid-template-columns:minmax(0,2fr) minmax(70px,.9fr) 74px 104px 122px 62px 84px 96px;gap:10px;align-items:center;background:var(--white);border:1px solid var(--border);border-radius:9px;padding:12px 16px;margin-bottom:5px;transition:border-color .15s;box-shadow:var(--shadow);}
 .list-item:hover{border-color:var(--accent);}
 .list-text{font-size:13px;font-weight:500;}
+.list-item>div{min-width:0;}
+.lc-cust{font-family:'Noto Sans KR',sans-serif;font-size:12.5px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prod-tag{display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;background:var(--surface2);border:1px solid var(--border2);color:var(--text);}
+.prod-tag.p-HF{background:#dbeafe;color:#1d4ed8;border-color:#bfdbfe;}
+.prod-tag.p-HCl{background:#fce7f3;color:#be185d;border-color:#fbcfe8;}
+.prod-tag.p-HNO3{background:#fef3c7;color:#b45309;border-color:#fde68a;}
+.prod-tag.p-KOH{background:#ede9fe;color:#6d28d9;border-color:#ddd6fe;}
+.prod-tag.p-H2SO4{background:#dcfce7;color:#15803d;border-color:#bbf7d0;}
+.m-only{display:none;}
+.filter-sep{width:1px;background:var(--border2);margin:4px 2px;}
+.filter-lbl{font-size:11px;font-weight:700;color:var(--text3);align-self:center;}
+.dir-btn{width:34px;border-radius:8px;background:var(--white);border:1px solid var(--border);color:var(--text2);font-size:12px;cursor:pointer;box-shadow:var(--shadow);}
+.dir-btn:hover{border-color:var(--accent);color:var(--accent);}
+.filter-row .nav-btn{width:32px;height:auto;}
+.btn-reset{background:var(--white);border:1px dashed var(--border2);color:var(--text2);border-radius:8px;padding:7px 12px;font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:700;cursor:pointer;}
+.btn-reset:hover{border-color:var(--red);color:var(--red);}
+/* 월별 요약 */
+.sum-card{background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden;}
+.sum-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:13px 18px;cursor:pointer;user-select:none;}
+.sum-head h3{font-size:15px;font-weight:800;margin-right:6px;}
+.sum-head .tg{margin-left:auto;font-size:12px;color:var(--text3);}
+.sum-head .stat-chip{box-shadow:none;padding:4px 10px;}
+.sum-body{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(0,1fr);gap:20px;padding:4px 18px 16px;border-top:1px solid var(--border);}
+.sum-body>div{min-width:0;}
+.sum-sec{font-size:11.5px;font-weight:800;color:var(--text2);margin:12px 0 8px;}
+.sum-sec span{font-weight:500;color:var(--text3);}
+.sum-wrap{overflow-x:auto;}
+.sum-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.sum-table th,.sum-table td{border:1px solid var(--border);padding:6px 10px;text-align:right;white-space:nowrap;}
+.sum-table thead th{background:var(--surface2);font-size:11.5px;color:var(--text2);}
+.sum-table th:first-child{text-align:left;}
+.sum-table tbody th{font-weight:700;background:var(--white);}
+.sum-table tfoot th,.sum-table tfoot td,.sum-table .tot{background:var(--surface2);font-weight:700;}
+.sum-table .clk{cursor:pointer;}
+.sum-table .clk:hover{background:var(--accent-l);}
+.sum-table .on{background:var(--accent-l);box-shadow:inset 0 0 0 2px var(--accent);}
+.sum-table td b{font-family:'IBM Plex Mono',monospace;font-size:13px;}
+.sum-table td small{display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--text3);font-weight:400;}
+.sum-table td.z{color:var(--border2);}
+.sum-note{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6;}
+.sum-cats{display:flex;gap:6px;flex-wrap:wrap;}
+.group-hdr{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;padding:14px 6px 7px;font-size:13px;}
+.group-hdr .g-name{font-weight:800;font-size:14px;}
+.group-hdr .g-n{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--accent);}
+.group-hdr .g-s{font-size:11.5px;color:var(--text3);}
 .list-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text2);}
 .dday{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;}
 .dday.late{color:var(--red)}.dday.soon{color:var(--yellow)}.dday.ok{color:var(--text3)}.dday.done{color:var(--green)}
@@ -284,9 +333,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   .main{padding:16px;}
   .tabs{padding:0 16px;}
   .form-row{grid-template-columns:1fr;}
-  .list-header,.list-item{grid-template-columns:1fr 80px 80px;}
-  .list-header .list-hdr:nth-child(4),.list-header .list-hdr:nth-child(5),
-  .list-item>*:nth-child(4),.list-item>*:nth-child(5){display:none;}
+  .list-header,.list-item{grid-template-columns:minmax(0,1fr) 96px 88px;}
+  .list-header>*:nth-child(2),.list-header>*:nth-child(3),.list-header>*:nth-child(4),.list-header>*:nth-child(6),.list-header>*:nth-child(7),
+  .list-item>*:nth-child(2),.list-item>*:nth-child(3),.list-item>*:nth-child(4),.list-item>*:nth-child(6),.list-item>*:nth-child(7){display:none;}
+  .m-only{display:inline;}
+  .sum-body{grid-template-columns:1fr;gap:0;}
+  .dl-group{margin-left:0;}
   .cal-header,.cal-grid{grid-template-columns:repeat(5,1fr) 0.45fr;}
   .cal-day{min-height:80px;padding:5px 3px;overflow:hidden;}
   .weekend-cell{height:80px;}
@@ -350,33 +402,40 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
   <!-- LIST TAB -->
   <div id="tab-list" style="display:none">
     <div class="filter-row">
+      <button class="nav-btn" onclick="listMonthStep(-1)" title="이전 달">‹</button>
+      <select class="filter-select" id="filterMonth" onchange="renderList()">
+        <option value="">전체 월</option>
+      </select>
+      <button class="nav-btn" onclick="listMonthStep(1)" title="다음 달">›</button>
       <select class="filter-select" id="filterStatus" onchange="renderList()">
         <option value="">전체 상태</option>
         <option>예정</option><option>진행중</option><option>완료</option><option>보류</option>
       </select>
-      <select class="filter-select" id="filterMonth" onchange="renderList()">
-        <option value="">전체 월</option>
-        <option value="05">5월</option><option value="06">6월</option>
-        <option value="07">7월</option><option value="08">8월</option>
-        <option value="09">9월</option><option value="10">10월</option>
-        <option value="11">11월</option><option value="12">12월</option>
-      </select>
       <select class="filter-select" id="filterCat" onchange="renderList()">
         <option value="">전체 카테고리</option>
-
+      </select>
+      <select class="filter-select" id="filterCust" onchange="renderList()"><option value="">전체 고객</option></select>
+      <select class="filter-select" id="filterProd" onchange="renderList()"><option value="">전체 품목</option></select>
+      <button class="btn-reset" onclick="resetListFilters()" title="고객·품목·카테고리·상태 필터 해제">✕ 필터 해제</button>
+      <span class="filter-sep"></span>
+      <span class="filter-lbl">정렬</span>
+      <select class="filter-select" id="listSortSel" onchange="setListSort(this.value,true)">
+        <option value="deadline">마감일</option><option value="customer">고객</option><option value="product">품목</option>
+        <option value="qty">수량</option><option value="category">카테고리</option><option value="status">상태</option>
+      </select>
+      <button class="dir-btn" id="listDirBtn" onclick="toggleListDir()" title="오름차순/내림차순">▲</button>
+      <span class="filter-lbl">묶기</span>
+      <select class="filter-select" id="listGroupSel" onchange="setListGroup(this.value)">
+        <option value="">묶지 않음</option><option value="customer">고객별</option><option value="product">품목별</option>
+        <option value="category">카테고리별</option><option value="status">상태별</option><option value="week">주차별</option>
       </select>
       <div class="dl-group">
         <button class="btn-dl btn-dl-csv" onclick="downloadCSV()">⬇ CSV</button>
         <button class="btn-dl btn-dl-xlsx" onclick="downloadExcel()">⬇ Excel</button>
       </div>
     </div>
-    <div class="list-header">
-      <div class="list-hdr">TASK</div>
-      <div class="list-hdr">마감일</div>
-      <div class="list-hdr">D-DAY</div>
-      <div class="list-hdr">카테고리</div>
-      <div class="list-hdr">상태</div>
-    </div>
+    <div class="sum-card" id="listSummary"></div>
+    <div class="list-header" id="listHeader"></div>
     <div id="listContainer"><div class="loading"><div class="spinner"></div>로딩 중...</div></div>
   </div>
 
@@ -938,8 +997,8 @@ function taskEntries(from, to){
   return real.concat(virt);
 }
 // 목록 탭 구간: 월 필터 있으면 그 달, 없으면 오늘 -14일 ~ +60일 (정기 Task만 해당, 일반 Task는 전부)
-function listRange(fm){
-  if (fm) { const y=curYear, m=+fm-1; return [ymd(new Date(y,m,1)), ymd(new Date(y,m+1,0))]; }
+function listRange(fm){   // fm = 'YYYY-MM'
+  if (fm) { const y=+fm.slice(0,4), m=+fm.slice(5)-1; return [ymd(new Date(y,m,1)), ymd(new Date(y,m+1,0))]; }
   return [ymd(addDays(today,-14)), ymd(addDays(today,60))];
 }
 // 가상 Task면 실제 Task로 저장(+변경), 아니면 그냥 update
@@ -1384,17 +1443,188 @@ window.prefillDate = (ds) => {
   switchTab('add', document.querySelectorAll('.tab')[2]);
 };
 
-function renderList() {
-  const fs = document.getElementById('filterStatus').value;
-  const fm = document.getElementById('filterMonth').value;
-  const fc = document.getElementById('filterCat').value;
-  let list = taskEntries(...listRange(fm))
-    .filter(([,t])=>t&&t.deadline)
-    .map(([k,t])=>({...t,_key:k}));
+/* ── 목록: 월별 요약 · 고객/품목 필터 · 정렬 · 묶어 보기 ─────────────────
+   고객·품목·수량은 출하 정보 필드를 우선 쓰고, 비어 있으면 Task 내용에서 인식 */
+const NONE = '(미지정)';
+const KNOWN_CUST = [['Qcells',/q[\s-]?cells|\bHWQ\b/i],['Jefferson (CSI)',/jefferson|\bCSI\b/i],['Korechem',/korechem/i],['Suniva',/suniva/i]];
+const PROD_RE = [['HF',/\bHF\b|불산/i],['HCl',/\bHCL\b|염산/i],['HNO3',/\bHNO\s?3\b|질산/i],['H2SO4',/\bH2SO4\b|황산/i],['KOH',/\bKOH\b/i]];
+function custOf(t){
+  const raw = String(t.customer||'').trim(); if (raw) return raw;
+  const k = KNOWN_CUST.find(([,re]) => re.test(String(t.text||'')));
+  return k ? k[0] : '';
+}
+function prodOf(t){
+  if (t.product) return t.product;
+  const s = String(t.text||'');
+  return PROD_RE.filter(([,re]) => re.test(s)).map(([k]) => k).join('/');
+}
+function qtyOf(t){
+  if (t.qty!=='' && t.qty!=null && !isNaN(+t.qty) && +t.qty>0) return {q:+t.qty, u:t.unit||'lb'};
+  const m = String(t.text||'').match(/(\d[\d,]*(?:\.\d+)?)\s*(lbs?|kg)\b/i);
+  return m ? {q:+m[1].replace(/,/g,''), u:/kg/i.test(m[2])?'Kg':'lb'} : null;
+}
+const isShip = t => CAT(t.category).k==='출하';
+const addQ = (acc,t) => { if (t._q) acc[t._q.u]=(acc[t._q.u]||0)+t._q.q; else acc.miss=(acc.miss||0)+1; return acc; };
+const qTxt = acc => ['lb','Kg'].filter(u=>acc[u]).map(u=>Math.round(acc[u]).toLocaleString()+' '+u).join(' + ');
+const fVal = id => document.getElementById(id).value;
+const ymLabel = v => `${v.slice(0,4)}년 ${+v.slice(5)}월`;
+
+let listSort = {k:'deadline', d:1}, listGroup = '', listSumOpen = true, listMonthInit = false;
+let sumC = [], sumP = [];
+const ST_ORDER = ['진행중','예정','보류','완료'];
+const SORT_VAL = {
+  deadline: t => t.deadline, customer: t => t._cust.toLowerCase(), product: t => t._prod, qty: t => t._lb,
+  category: t => CATS.indexOf(CAT(t.category)), status: t => ST_ORDER.indexOf(t.status),
+  week: t => ymd(mondayOf(parseD(t.deadline))),
+};
+const GROUP_LABEL = {
+  customer: t => t._cust || NONE, product: t => t._prod || NONE, category: t => CAT(t.category).k,
+  status: t => t.status || NONE, week: t => { const m=mondayOf(parseD(t.deadline)); return `${fmtMD(ymd(m))} ~ ${fmtMD(ymd(addDays(m,6)))} 주`; },
+};
+function cmpBy(k, d){
+  const f = SORT_VAL[k];
+  return (a,b) => { const x=f(a), y=f(b), ex=(x===''||x==null), ey=(y===''||y==null);
+    if (ex||ey) return ex-ey;               // 빈 값은 항상 맨 뒤
+    return (x<y ? -1 : x>y ? 1 : 0) * d; };
+}
+function sortList(list){
+  const g = listGroup ? cmpBy(listGroup,1) : null, s = cmpBy(listSort.k, listSort.d), dl = cmpBy('deadline',1);
+  return list.sort((a,b) => (g?g(a,b):0) || s(a,b) || dl(a,b) || String(a.text).localeCompare(String(b.text)));
+}
+// 월 선택 목록: 저장된 Task의 가장 이른 달 ~ (가장 늦은 달, 오늘+3개월) — 처음엔 이번 달
+function buildMonthOptions(){
+  const sel = document.getElementById('filterMonth'), nowYm = ymd(today).slice(0,7);
+  const cur = listMonthInit ? sel.value : nowYm; listMonthInit = true;
+  const ms = Object.values(tasks).filter(t=>t&&/^20\d\d-\d\d-\d\d$/.test(t.deadline||'')).map(t=>t.deadline.slice(0,7));
+  let lo = ms.reduce((a,b)=>b<a?b:a, nowYm), hi = ms.reduce((a,b)=>b>a?b:a, nowYm);
+  const plus = ymd(new Date(today.getFullYear(), today.getMonth()+3, 1)).slice(0,7);
+  if (plus > hi) hi = plus;
+  if (cur && cur < lo) lo = cur;
+  if (cur && cur > hi) hi = cur;
+  const opts = []; let [y,m] = lo.split('-').map(Number);
+  for (let g=0; g<360; g++) { const v=`${y}-${String(m).padStart(2,'0')}`; opts.push(v); if (v>=hi) break; if (++m>12) { m=1; y++; } }
+  sel.innerHTML = '<option value="">전체 월</option>' + opts.map(v=>`<option value="${v}">${ymLabel(v)}</option>`).join('');
+  sel.value = cur;
+}
+function fillSel(id, first, vals){
+  const sel = document.getElementById(id), cur = sel.value;
+  sel.innerHTML = `<option value="">${first}</option>` + vals.map(v=>`<option value="${escH(v)}">${escH(v)}</option>`).join('');
+  sel.value = vals.includes(cur) ? cur : '';
+}
+// 월·상태 필터까지 적용 + 고객/품목/수량 인식 (요약은 이 목록 기준)
+function listBase(){
+  const fs = fVal('filterStatus'), fm = fVal('filterMonth');
+  let list = taskEntries(...listRange(fm)).filter(([,t])=>t&&t.deadline).map(([k,t])=>({...t,_key:k}));
   if (fs) list = list.filter(t=>t.status===fs);
-  if (fm) list = list.filter(t=>t.deadline.startsWith(`${curYear}-${fm}`));
+  if (fm) list = list.filter(t=>t.deadline.startsWith(fm));
+  const seen = {};
+  list.forEach(t => {
+    const c = custOf(t);
+    t._cust = c ? (seen[c.toLowerCase()] ||= c) : '';      // 대소문자만 다른 표기는 하나로
+    t._prod = prodOf(t); t._q = qtyOf(t);
+    t._lb = t._q ? t._q.q * (t._q.u==='Kg' ? 2.20462 : 1) : null;
+  });
+  return list;
+}
+function applyListFilters(base){
+  const fc = fVal('filterCat'), cu = fVal('filterCust'), pr = fVal('filterProd');
+  let list = base;
   if (fc) list = list.filter(t=>CAT(t.category).k===fc);
-  list.sort((a,b)=>a.deadline.localeCompare(b.deadline));
+  if (cu) list = list.filter(t=> cu===NONE ? (!t._cust && isShip(t)) : t._cust===cu);
+  if (pr) list = list.filter(t=> pr===NONE ? (!t._prod && isShip(t)) : t._prod===pr);
+  return sortList(list);
+}
+// ── 필터·정렬 적용된 리스트 (화면·다운로드 공통) ──
+function getFilteredList(){ return applyListFilters(listBase()); }
+
+const uniq = a => [...new Set(a)];
+const prodRank = p => { const i = SHIP_PRODUCTS.indexOf(p); return p===NONE ? 999 : (i<0 ? 500 : i); };
+function shipMatrix(base){
+  const ship = base.filter(isShip), cnt = {};
+  ship.forEach(t => { const c=t._cust||NONE; cnt[c]=(cnt[c]||0)+1; });
+  const C = Object.keys(cnt).sort((a,b)=>(a===NONE)-(b===NONE) || cnt[b]-cnt[a] || a.localeCompare(b));
+  const P = uniq(ship.map(t=>t._prod||NONE)).sort((a,b)=>prodRank(a)-prodRank(b) || a.localeCompare(b));
+  const cell = (c,p) => ship.filter(t=>(c==null||(t._cust||NONE)===c) && (p==null||(t._prod||NONE)===p));
+  return {ship, C, P, cell};
+}
+function renderListSummary(base){
+  const el = document.getElementById('listSummary'), fm = fVal('filterMonth');
+  const fc = fVal('filterCat'), cu = fVal('filterCust'), pr = fVal('filterProd');
+  const {ship, C, P, cell} = shipMatrix(base); sumC = C; sumP = P;
+  const done = base.filter(t=>t.status==='완료').length;
+  const late = base.filter(t=>t.status!=='완료'&&diffDays(t.deadline)<0).length;
+  const chips = [
+    {l:'전체', v:base.length, c:'var(--text)', bg:'var(--surface2)'},
+    {l:'출하', v:ship.length, c:'#dc2626', bg:'#fef2f2'},
+    {l:'완료', v:done, c:'var(--green)', bg:'var(--green-l)'},
+    {l:'지연', v:late, c:'var(--red)', bg:'var(--red-l)'},
+  ].map(s=>`<div class="stat-chip" style="background:${s.bg}"><span style="color:var(--text3);font-size:11px">${s.l}</span><span class="stat-val" style="color:${s.c}">${s.v}</span></div>`).join('');
+  let html = `<div class="sum-head" onclick="toggleListSummary()"><h3>📊 ${fm?ymLabel(fm):'전체 기간'} 요약</h3>${chips}<span class="tg">${listSumOpen?'접기 ▴':'펼치기 ▾'}</span></div>`;
+  if (listSumOpen) {
+    const td = (arr, ci, pi, extra) => {
+      const on = fc==='출하' && (ci<0 ? !cu : cu===C[ci]) && (pi<0 ? !pr : pr===P[pi]) && (ci>=0||pi>=0);
+      if (!arr.length) return `<td class="z${extra||''}">·</td>`;
+      const q = qTxt(arr.reduce(addQ,{}));
+      return `<td class="clk${extra||''}${on?' on':''}" onclick="setListShip(${ci},${pi})" title="클릭: 아래 목록에 이 건만 보기"><b>${arr.length}</b>건${q?`<small>${q}</small>`:''}</td>`;
+    };
+    const matrix = !ship.length ? `<div class="sum-note">이 기간에 출하 Task가 없습니다.</div>` : `
+      <div class="sum-wrap"><table class="sum-table">
+        <thead><tr><th>고객 \\ 품목</th>${P.map(p=>`<th>${escH(p)}</th>`).join('')}<th>합계</th><th>완료</th></tr></thead>
+        <tbody>${C.map((c,ci)=>{ const row=cell(c,null); return `<tr><th>${escH(c)}</th>${P.map((p,pi)=>td(cell(c,p),ci,pi)).join('')}${td(row,ci,-1,' tot')}<td class="tot">${row.filter(t=>t.status==='완료').length}/${row.length}</td></tr>`; }).join('')}</tbody>
+        <tfoot><tr><th>합계</th>${P.map((p,pi)=>td(cell(null,p),-1,pi,' tot')).join('')}<td class="tot"><b>${ship.length}</b>건${qTxt(ship.reduce(addQ,{}))?`<small>${qTxt(ship.reduce(addQ,{}))}</small>`:''}</td><td class="tot">${ship.filter(t=>t.status==='완료').length}/${ship.length}</td></tr></tfoot>
+      </table></div>
+      <div class="sum-note">칸을 클릭하면 아래 목록이 그 고객·품목 출하만 보여줍니다 (다시 클릭하면 해제).${(m=>m?` 수량은 입력된 건만 합산 — 수량 없는 출하 ${m}건 제외.`:'')(ship.filter(t=>!t._q).length)}</div>`;
+    const catCnt = {}; base.forEach(t=>{ const k=CAT(t.category).k; catCnt[k]=(catCnt[k]||0)+1; });
+    const cats = CATS.filter(c=>catCnt[c.k]).map(c=>`<span class="cat-pill${fc===c.k?' on':''}${fc&&fc!==c.k?' off':''}" style="${catVars(c.k)}" onclick="setListCat('${c.k}')">${c.ic} ${c.k} <span class="n">${catCnt[c.k]}</span></span>`).join('') || '<span class="sum-note">Task 없음</span>';
+    html += `<div class="sum-body">
+      <div><div class="sum-sec">🚚 출하 — 고객 × 품목 <span>건수 · 수량</span></div>${matrix}</div>
+      <div><div class="sum-sec">Task 종류별 <span>클릭해서 필터</span></div><div class="sum-cats">${cats}</div></div>
+    </div>`;
+  }
+  el.innerHTML = html;
+}
+window.toggleListSummary = () => { listSumOpen = !listSumOpen; renderList(); };
+window.setListShip = (ci, pi) => {
+  const c = ci<0 ? '' : sumC[ci], p = pi<0 ? '' : sumP[pi];
+  const same = fVal('filterCat')==='출하' && fVal('filterCust')===c && fVal('filterProd')===p;
+  document.getElementById('filterCat').value  = same ? '' : '출하';
+  document.getElementById('filterCust').value = same ? '' : c;
+  document.getElementById('filterProd').value = same ? '' : p;
+  renderList();
+};
+window.setListCat = k => { const s=document.getElementById('filterCat'); s.value = s.value===k ? '' : k; renderList(); };
+window.setListSort = (k, fromSelect) => {
+  listSort = (!fromSelect && listSort.k===k) ? {k, d:-listSort.d} : {k, d:1};
+  renderList();
+};
+window.toggleListDir = () => { listSort.d = -listSort.d; renderList(); };
+window.setListGroup = g => { listGroup = g; renderList(); };
+window.resetListFilters = () => { ['filterStatus','filterCat','filterCust','filterProd'].forEach(id=>document.getElementById(id).value=''); renderList(); };
+window.listMonthStep = d => {
+  const sel = document.getElementById('filterMonth'), nowYm = ymd(today).slice(0,7);
+  let v = nowYm;
+  if (sel.value) { const [y,m] = sel.value.split('-').map(Number); v = ymd(new Date(y, m-1+d, 1)).slice(0,7); }
+  if (![...sel.options].some(o=>o.value===v)) sel.add(new Option(ymLabel(v), v));
+  sel.value = v; renderList();
+};
+
+function renderList() {
+  buildMonthOptions();
+  const base = listBase();
+  const ship = base.filter(isShip);
+  fillSel('filterCust', '전체 고객', uniq(base.map(t=>t._cust).filter(Boolean)).sort((a,b)=>a.localeCompare(b)).concat(ship.some(t=>!t._cust)?[NONE]:[]));
+  fillSel('filterProd', '전체 품목', uniq(base.map(t=>t._prod).filter(Boolean)).sort((a,b)=>prodRank(a)-prodRank(b)||a.localeCompare(b)).concat(ship.some(t=>!t._prod)?[NONE]:[]));
+  renderListSummary(base);
+  const list = applyListFilters(base);
+
+  document.getElementById('listSortSel').value = listSort.k;
+  document.getElementById('listDirBtn').textContent = listSort.d>0 ? '▲' : '▼';
+  document.getElementById('listGroupSel').value = listGroup;
+  const hdr = (k, label, cls) => `<div class="list-hdr sortable${cls||''}${listSort.k===k?' on':''}" onclick="setListSort('${k}')" title="클릭해서 정렬">${label}${listSort.k===k?(listSort.d>0?' ▲':' ▼'):''}</div>`;
+  document.getElementById('listHeader').innerHTML =
+    `<div class="list-hdr">TASK <span style="font-weight:400;letter-spacing:0">${list.length}건</span></div>` +
+    hdr('customer','고객') + hdr('product','품목') + hdr('qty','수량',' r') + hdr('deadline','마감일') +
+    `<div class="list-hdr">D-DAY</div>` + hdr('category','카테고리') + hdr('status','상태');
 
   const ddClass = (t) => {
     if (t.status==='완료') return 'done';
@@ -1406,15 +1636,16 @@ function renderList() {
     const d=diffDays(t.deadline);
     return d<0?`-${-d}일`:`D-${d}`;
   };
-
-  document.getElementById('listContainer').innerHTML = list.length
-    ? list.map(t=>`
+  const row = t => `
       <div class="list-item cat" style="${catVars(t.category)}">
         <div>
           <div class="list-text"><span style="color:${CAT(t.category).c};margin-right:4px">${CAT(t.category).ic}</span>${t.patternId?'<span class="pattern-tag" style="margin-right:5px">↻ 정기</span>':''}${escH(t.text)}</div>
-          <div class="list-meta">${t.worker||''} ${t.worker&&t.category?'·':''} ${t.category||''}${t.customer?' · '+escH(t.customer):''} ${arMeta(t)}</div>
+          <div class="list-meta">${escH([t.worker, t.poNo?'PO '+t.poNo:''].filter(Boolean).join(' · '))}<span class="m-only"> ${escH([t._cust, t._prod, t._q?t._q.q.toLocaleString()+' '+t._q.u:''].filter(Boolean).join(' · '))}</span> ${arMeta(t)}</div>
         </div>
-        <div class="list-meta">${t.deadline}</div>
+        <div class="lc-cust" title="${escH(t._cust)}">${escH(t._cust)}</div>
+        <div>${t._prod?`<span class="prod-tag p-${escH(t._prod)}">${escH(t._prod)}</span>`:''}</div>
+        <div class="list-meta r">${t._q?t._q.q.toLocaleString()+' '+t._q.u:''}</div>
+        <div class="list-meta">${t.deadline} (${DOW_KO[parseD(t.deadline).getDay()]})</div>
         <div class="dday ${ddClass(t)}">${ddText(t)}</div>
         <div>${catBadge(CAT(t.category).k)}</div>
         <div>
@@ -1422,34 +1653,39 @@ function renderList() {
             ${['예정','진행중','완료','보류'].map(s=>`<option${s===t.status?' selected':''}>${s}</option>`).join('')}
           </select>
         </div>
-      </div>`).join('')
-    : '<div class="empty"><div class="empty-icon">📭</div><div>Task가 없습니다</div></div>';
-}
+      </div>`;
 
-// ── 필터 적용된 리스트 가져오기 (다운로드용 공통 함수) ──
-function getFilteredList() {
-  const fs = document.getElementById('filterStatus').value;
-  const fm = document.getElementById('filterMonth').value;
-  const fc = document.getElementById('filterCat').value;
-  let list = taskEntries(...listRange(fm))
-    .filter(([,t])=>t&&t.deadline)
-    .map(([k,t])=>({...t,_key:k}));
-  if (fs) list = list.filter(t=>t.status===fs);
-  if (fm) list = list.filter(t=>t.deadline.startsWith(`${curYear}-${fm}`));
-  if (fc) list = list.filter(t=>CAT(t.category).k===fc);
-  list.sort((a,b)=>a.deadline.localeCompare(b.deadline));
-  return list;
+  let out = '';
+  if (listGroup) {
+    const lab = GROUP_LABEL[listGroup], groups = [];
+    list.forEach(t => { const g=lab(t); const last=groups[groups.length-1]; if (last && last.g===g) last.items.push(t); else groups.push({g, items:[t]}); });
+    out = groups.map(({g, items}) => {
+      const sh = items.filter(isShip), q = qTxt(sh.reduce(addQ,{}));
+      return `<div class="group-hdr"><span class="g-name">${escH(g)}</span><span class="g-n">${items.length}건</span>` +
+        `<span class="g-s">완료 ${items.filter(t=>t.status==='완료').length}${sh.length?` · 출하 ${sh.length}건${q?' · '+q:''}`:''}</span></div>` + items.map(row).join('');
+    }).join('');
+  } else out = list.map(row).join('');
+  document.getElementById('listContainer').innerHTML = out || '<div class="empty"><div class="empty-icon">📭</div><div>Task가 없습니다</div></div>';
 }
+window.renderList = renderList;   // 필터 select의 onchange에서 호출
+
+// 다운로드 파일명에 쓰는 기간 표기
+const dlPeriod = () => fVal('filterMonth') || '전체';
 
 // ── CSV 다운로드 ──────────────────────────────────────
 window.downloadCSV = () => {
   const list = getFilteredList();
   if (!list.length) { showToast('다운로드할 데이터가 없어요', true); return; }
 
-  const headers = ['Task 내용','마감일','담당자','카테고리','우선순위','상태'];
+  const headers = ['Task 내용','마감일','고객','품목','수량','단위','고객 PO#','담당자','카테고리','우선순위','상태'];
   const rows = list.map(t => [
     `"${(t.text||'').replace(/"/g,'""')}"`,
     t.deadline||'',
+    `"${(t._cust||'').replace(/"/g,'""')}"`,
+    t._prod||'',
+    t._q ? t._q.q : '',
+    t._q ? t._q.u : '',
+    `"${(t.poNo||'').replace(/"/g,'""')}"`,
     `"${(t.worker||'').replace(/"/g,'""')}"`,
     t.category||'',
     t.priority||'',
@@ -1461,9 +1697,8 @@ window.downloadCSV = () => {
   const blob = new Blob([csvContent], {type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const month = document.getElementById('filterMonth').value || '전체';
   a.href = url;
-  a.download = 'JNFAM_Task_' + curYear + '년_' + month + '월.csv';
+  a.download = 'JNFAM_Task_' + dlPeriod() + '.csv';
   a.click();
   URL.revokeObjectURL(url);
   showToast('✅ CSV 다운로드 완료!');
@@ -1485,8 +1720,13 @@ window.downloadExcel = () => {
 
   const rows = list.map(t => `
     <tr>
-      <td style="background:${statusColor[t.status]||'#fff'};padding:6px 10px;border:1px solid #e2e8f0">${t.text||''}</td>
+      <td style="background:${statusColor[t.status]||'#fff'};padding:6px 10px;border:1px solid #e2e8f0">${escH(t.text||'')}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.deadline||''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0">${escH(t._cust||'')}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${escH(t._prod||'')}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:right">${t._q?t._q.q:''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t._q?t._q.u:''}</td>
+      <td style="padding:6px 10px;border:1px solid #e2e8f0">${escH(t.poNo||'')}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${ddayText(t)}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.worker||'-'}</td>
       <td style="padding:6px 10px;border:1px solid #e2e8f0;text-align:center">${t.category||'-'}</td>
@@ -1494,7 +1734,19 @@ window.downloadExcel = () => {
       <td style="background:${statusColor[t.status]||'#fff'};padding:6px 10px;border:1px solid #e2e8f0;text-align:center;font-weight:700">${t.status||''}</td>
     </tr>`).join('');
 
-  const month = document.getElementById('filterMonth').value||'전체';
+  // 출하 요약 (고객 × 품목) — 다운로드한 목록 기준
+  const B = 'padding:6px 10px;border:1px solid #e2e8f0';
+  const {ship, C, P, cell} = shipMatrix(list);
+  const sumRows = C.flatMap(c => P.map(p => [c, p, cell(c,p)])).filter(([,,a]) => a.length).map(([c,p,a]) => { const q=a.reduce(addQ,{}); return `
+    <tr><td style="${B}">${escH(c)}</td><td style="${B};text-align:center">${escH(p)}</td><td style="${B};text-align:right">${a.length}</td><td style="${B};text-align:right">${a.filter(t=>t.status==='완료').length}</td><td style="${B};text-align:right">${q.lb?Math.round(q.lb):''}</td><td style="${B};text-align:right">${q.Kg?Math.round(q.Kg):''}</td></tr>`; }).join('');
+  const sumTable = !ship.length ? '' : `
+    <table border="1" style="border-collapse:collapse;font-family:Malgun Gothic,sans-serif;font-size:12px">
+      <thead>
+        <tr><th colspan="6" style="padding:8px 12px;text-align:left;background:#f1f5f9">출하 요약 (${dlPeriod()}) — 총 ${ship.length}건</th></tr>
+        <tr style="background:#dc2626;color:#fff;font-weight:700"><th style="padding:8px 12px">고객</th><th style="padding:8px 12px">품목</th><th style="padding:8px 12px">출하 건수</th><th style="padding:8px 12px">완료</th><th style="padding:8px 12px">수량 (lb)</th><th style="padding:8px 12px">수량 (Kg)</th></tr>
+      </thead>
+      <tbody>${sumRows}</tbody>
+    </table><br>`;
   const html = `
     <html xmlns:o="urn:schemas-microsoft-com:office:office"
           xmlns:x="urn:schemas-microsoft-com:office:excel"
@@ -1505,11 +1757,17 @@ window.downloadExcel = () => {
     <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
     </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]-->
     </head><body>
+    ${sumTable}
     <table border="1" style="border-collapse:collapse;font-family:Malgun Gothic,sans-serif;font-size:12px">
       <thead>
         <tr style="background:#2563eb;color:#fff;font-weight:700">
           <th style="padding:8px 12px;min-width:200px">Task 내용</th>
           <th style="padding:8px 12px;min-width:90px">마감일</th>
+          <th style="padding:8px 12px;min-width:90px">고객</th>
+          <th style="padding:8px 12px;min-width:60px">품목</th>
+          <th style="padding:8px 12px;min-width:80px">수량</th>
+          <th style="padding:8px 12px;min-width:50px">단위</th>
+          <th style="padding:8px 12px;min-width:80px">고객 PO#</th>
           <th style="padding:8px 12px;min-width:70px">D-DAY</th>
           <th style="padding:8px 12px;min-width:80px">담당자</th>
           <th style="padding:8px 12px;min-width:70px">카테고리</th>
@@ -1525,7 +1783,7 @@ window.downloadExcel = () => {
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
-  a.download = 'JNFAM_Task_' + curYear + '년_' + month + '월.xls';
+  a.download = 'JNFAM_Task_' + dlPeriod() + '.xls';
   a.click();
   URL.revokeObjectURL(url);
   showToast('✅ Excel 다운로드 완료!');
