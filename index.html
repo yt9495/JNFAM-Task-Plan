@@ -127,6 +127,12 @@ body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-seri
 .task-chip.is-done{opacity:.55;}
 .task-chip.is-done .tx{text-decoration:line-through;}
 .task-chip.is-late{box-shadow:inset 0 0 0 1px var(--red);}
+/* ── 출하 고객 구분: 약자 배지(A) + 왼쪽 띠(C) ── */
+.task-chip.ship{border-left-width:4px;}
+.cu{flex-shrink:0;display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:700;color:#fff;border-radius:3px;padding:0 4px;line-height:13px;letter-spacing:.3px;}
+.cu.lg{font-size:11px;line-height:18px;padding:0 7px;border-radius:4px;}
+.lc-cust .cu{margin-right:5px;vertical-align:1px;}
+.lg-break{flex-basis:100%;height:0;}
 .cat-legend{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px;}
 .cat-legend .lg-title{font-size:11px;color:var(--text3);margin-right:2px;}
 .cat-pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11.5px;font-weight:700;color:var(--cc);background:var(--cb);border:1.5px solid transparent;cursor:pointer;user-select:none;white-space:nowrap;}
@@ -746,6 +752,7 @@ function taskPrefix(t) {
 const CATS = [
   {k:'출하', ic:'◆', c:'#dc2626', b:'#fef2f2', d:'출고·출하'},
   {k:'입고', ic:'◆', c:'#2563eb', b:'#eff4ff', d:'입고·수령'},
+  {k:'회수', ic:'▽', c:'#92400e', b:'#fdf4e7', d:'빈 IBC·드럼 회수/픽업 (출하 아님)'},
   {k:'준비', ic:'◆', c:'#ca8a04', b:'#fefce8', d:'출하 준비·IBC 준비'},
   {k:'생산', ic:'■', c:'#16a34a', b:'#f0fdf4', d:'생산·충전'},
   {k:'점검', ic:'▲', c:'#ea580c', b:'#fff7ed', d:'설비 점검·청소'},
@@ -758,6 +765,30 @@ window.CAT = CAT;
 const catVars = k => { const c=CAT(k); return `--cc:${c.c};--cb:${c.b}`; };
 const catBadge = k => `<span class="cat-badge" style="${catVars(k)}">${CAT(k).ic} ${k||'기타'}</span>`;
 const catOptions = (sel) => CATS.map(c=>`<option value="${c.k}"${c.k===sel?' selected':''} style="color:${c.c};font-weight:700">${c.ic} ${c.k}</option>`).join('');
+/* ── 고객 정의: 정식 이름·약자·색·인식 패턴 (고객 추가는 여기 한 줄) ── */
+const CUSTS = [
+  {n:'Qcells',          a:'QC', c:'#1d4ed8', re:/q[\s-]?cells?|\bHWQ\b/i},
+  {n:'Jefferson (CSI)', a:'JF', c:'#7c3aed', re:/jefferson|\bCSI\b/i},
+  {n:'Korechem',        a:'KC', c:'#0f766e', re:/korechem/i},
+  {n:'Suniva',          a:'SV', c:'#b45309', re:/suniva/i},
+  {n:'ESF',             a:'ES', c:'#be185d', re:/\bESF\b/i},
+];
+const NO_CUST = {n:'미지정', a:'?', c:'#94a3b8'};
+// 고객 이름 → 정식 이름 (입력값 우선, 없으면 Task 내용에서 인식)
+function custOf(t){
+  const raw = String(t.customer||'').trim();
+  if (raw) { const k = CUSTS.find(c => c.n.toLowerCase()===raw.toLowerCase() || c.re.test(raw)); return k ? k.n : raw; }
+  const k = CUSTS.find(c => c.re.test(String(t.text||'')));
+  return k ? k.n : '';
+}
+function custMeta(name){
+  if (!name) return NO_CUST;
+  return CUSTS.find(c => c.n===name) || {n:name, a:name.replace(/[^A-Za-z0-9가-힣]/g,'').slice(0,2).toUpperCase()||'?', c:'#64748b'};
+}
+const custTag = (t, lg) => { const m = custMeta(custOf(t)); return `<span class="cu${lg?' lg':''}" style="background:${m.c}" title="고객: ${escH(m.n)}">${escH(m.a)}</span>`; };
+// 빈 IBC·드럼 회수/픽업 → 출하가 아닌 '회수'로 표시 (기존에 출하로 저장된 건도 화면에서 자동 전환)
+const isEmptyReturn = s => /\bempty\b|빈\s*(ibc|드럼|용기|통)/i.test(s) && /ibc|drum|tote|드럼|용기/i.test(s);
+const normCat = t => (t && CAT(t.category).k==='출하' && isEmptyReturn(String(t.text||''))) ? {...t, category:'회수', _autoCat:true} : t;
 const escH = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function statusMark(t){
   if (t.status==='완료')   return '<span class="st done">✓</span>';
@@ -768,11 +799,14 @@ function statusMark(t){
 }
 function chipHTML(t, ds, small){
   const c = CAT(t.category); const cls = taskClass(t);
-  return `<div class="task-chip cat${cls==='done'?' is-done':''}${cls==='late'?' is-late':''}${t._virtual?' virt':''}" style="${catVars(t.category)}${small?';font-size:9px;padding:2px 4px':''}" title="[${t.category||'기타'}] ${escH(t.text)} · ${t.status||''}" onclick="openDayModal('${ds}',event)">
-    <span class="cat-ic">${c.ic}</span>${t.patternId?'<span class="rp">↻</span>':''}${statusMark(t)}${arChip(t)}<span class="tx">${escH(t.text)}</span></div>`;
+  const ship = c.k==='출하', cm = ship ? custMeta(custOf(t)) : null;
+  return `<div class="task-chip cat${ship?' ship':''}${cls==='done'?' is-done':''}${cls==='late'?' is-late':''}${t._virtual?' virt':''}" style="${catVars(t.category)}${ship?`;border-left-color:${cm.c}`:''}${small?';font-size:9px;padding:2px 4px':''}" title="[${c.k}]${ship?' '+escH(cm.n)+' ·':''} ${escH(t.text)} · ${t.status||''}" onclick="openDayModal('${ds}',event)">
+    <span class="cat-ic">${c.ic}</span>${ship?custTag(t):''}${t.patternId?'<span class="rp">↻</span>':''}${statusMark(t)}${arChip(t)}<span class="tx">${escH(t.text)}</span></div>`;
 }
 let calCatFilter = '';
-window.setCalCat = k => { calCatFilter = calCatFilter===k ? '' : k; renderCalendar(); };
+let calCustFilter = '';
+window.setCalCat = k => { calCatFilter = calCatFilter===k ? '' : k; calCustFilter = ''; renderCalendar(); };
+window.setCalCust = n => { calCustFilter = calCustFilter===n ? '' : n; renderCalendar(); };
 window.catPreview = (selId, pvId) => {
   const sel=document.getElementById(selId), pv=document.getElementById(pvId); if(!sel||!pv) return;
   const c=CAT(sel.value); pv.setAttribute('style',catVars(c.k)); pv.textContent=`${c.ic} ${c.k}`;
@@ -821,6 +855,7 @@ function arMeta(t){
 function initCatSelects(){
   ['inp-product','pt-product'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=prodOptions(''); });
   const inp=document.getElementById('inp-cat'); if(inp){ inp.innerHTML=catOptions('출하'); catPreview('inp-cat','inp-cat-pv'); shipToggle('inp-cat','inp-ship'); }
+  const dl=document.getElementById('custList'); if(dl) dl.innerHTML=CUSTS.map(c=>`<option value="${escH(c.n)}">`).join('');
   const f=document.getElementById('filterCat'); if(f){ f.innerHTML='<option value="">전체 카테고리</option>'+CATS.map(c=>`<option value="${c.k}" style="color:${c.c}">${c.ic} ${c.k}</option>`).join(''); }
 }
 initCatSelects();
@@ -977,7 +1012,7 @@ function parseVKey(k){ if (!k || !k.startsWith('v~')) return null; const [, pid,
 
 // 저장된 Task + 가상 정기 Task를 [key, task] 배열로 (가상은 from~to 구간만)
 function taskEntries(from, to){
-  const real = Object.entries(tasks).filter(([,t]) => t);
+  const real = Object.entries(tasks).filter(([,t]) => t).map(([k,t]) => [k, normCat(t)]);
   const done = new Set(real.filter(([,t]) => t.patternId).map(([,t]) => t.patternId+'|'+t.occDate));
   const virt = [];
   Object.entries(patterns).forEach(([pid, p]) => {
@@ -987,11 +1022,11 @@ function taskEntries(from, to){
       if ((p.skip && p.skip[occ]) || done.has(pid+'|'+occ)) return;
       const dl = applyHoliday(p, occ);
       if (!dl || dl < from || dl > to) return;
-      virt.push([vKey(pid, occ), {
+      virt.push([vKey(pid, occ), normCat({
         text: p.text, deadline: dl, worker: p.worker || '', category: p.category,
         priority: p.priority || '보통', status: '예정', ...patternShip(p),
         patternId: pid, occDate: occ, _virtual: true, _shifted: dl !== occ,
-      }]);
+      })]);
     });
   });
   return real.concat(virt);
@@ -1223,8 +1258,14 @@ function renderCalendar() {
   const catCnt = {}; mTasks.forEach(t=>{ const k=CAT(t.category).k; catCnt[k]=(catCnt[k]||0)+1; });
   document.getElementById('catLegend').innerHTML = '<span class="lg-title">Task 종류 (클릭해서 필터)</span>' +
     CATS.map(c=>`<span class="cat-pill${calCatFilter===c.k?' on':''}${calCatFilter&&calCatFilter!==c.k?' off':''}" style="${catVars(c.k)}" title="${c.d}" onclick="setCalCat('${c.k}')">${c.ic} ${c.k} <span class="n">${catCnt[c.k]||0}</span></span>`).join('') +
-    (calCatFilter?` <span class="cat-pill" style="--cc:#475569;--cb:#fff;border-color:#cbd5e1" onclick="setCalCat('${calCatFilter}')">✕ 전체 보기</span>`:'');
-  if (calCatFilter) Object.keys(byDate).forEach(d=>{ byDate[d]=byDate[d].filter(t=>CAT(t.category).k===calCatFilter); });
+    (calCatFilter?` <span class="cat-pill" style="--cc:#475569;--cb:#fff;border-color:#cbd5e1" onclick="setCalCat('${calCatFilter}')">✕ 전체 보기</span>`:'') +
+    (calCatFilter==='출하' ? (() => {   // 출하 선택 시 고객별 알약
+      const cc = {}; mTasks.filter(t=>CAT(t.category).k==='출하').forEach(t=>{ const n=custMeta(custOf(t)).n; cc[n]=(cc[n]||0)+1; });
+      const names = Object.keys(cc).sort((a,b)=>(a===NO_CUST.n)-(b===NO_CUST.n) || cc[b]-cc[a] || a.localeCompare(b));
+      return '<span class="lg-break"></span><span class="lg-title">고객</span>' + (names.length ? names.map(n=>{ const m=custMeta(n===NO_CUST.n?'':n);
+        return `<span class="cat-pill${calCustFilter===n?' on':''}${calCustFilter&&calCustFilter!==n?' off':''}" style="--cc:${m.c};--cb:${m.c}1a" onclick="setCalCust('${escH(n).replace(/'/g,'&#39;')}')"><span class="cu" style="background:${m.c}">${escH(m.a)}</span> ${escH(n)} <span class="n">${cc[n]}</span></span>`; }).join('') : '<span class="lg-title">이번 달 출하 없음</span>');
+    })() : '');
+  if (calCatFilter) Object.keys(byDate).forEach(d=>{ byDate[d]=byDate[d].filter(t=>CAT(t.category).k===calCatFilter && (!calCustFilter || custMeta(custOf(t)).n===calCustFilter)); });
   Object.values(byDate).forEach(arr=>arr.sort((a,b)=>CATS.indexOf(CAT(a.category))-CATS.indexOf(CAT(b.category))));
 
   const grid = document.getElementById('calGrid');
@@ -1324,12 +1365,14 @@ window.openDayModal = (ds, e) => {
       const cats = catOptions(CAT(t.category).k);
       const prios = ['높음','보통','낮음'].map(p=>`<option${p===t.priority?' selected':''}>${p}</option>`).join('');
       return `
-      <div class="modal-task-item cat" id="item-${t._key}" style="${catVars(t.category)}">
+      <div class="modal-task-item cat" id="item-${t._key}" style="${catVars(t.category)}${CAT(t.category).k==='출하'?';border-left-color:'+custMeta(custOf(t)).c:''}">
         <button class="edit-btn" onclick="toggleEdit('${t._key}','${ds}')" title="편집">✏️</button>
         <button class="del-btn" onclick="deleteTask('${t._key}','${ds}')" title="삭제">×</button>
         <div class="modal-task-text">${t.text}</div>
         <div class="modal-task-meta">
           ${catBadge(CAT(t.category).k)}
+          ${CAT(t.category).k==='출하'?custTag(t,true):''}
+          ${t._autoCat?'<span class="meta-chip" title="출하로 저장돼 있지만 빈 IBC·드럼 회수로 인식해 회수로 표시 — ✏️ 편집 후 저장하면 회수로 확정">자동 분류</span>':''}
           ${t.patternId?`<span class="pattern-tag" title="정기 패턴에서 생성${t._virtual?' (아직 저장 전)':''}">↻ 정기${t._shifted?' · 휴일로 이동':''}</span>`:''}
           ${t.worker?`<span class="meta-chip">👤 ${t.worker}</span>`:''}
           ${t.priority?`<span class="meta-chip">${t.priority}</span>`:''}
@@ -1446,13 +1489,7 @@ window.prefillDate = (ds) => {
 /* ── 목록: 월별 요약 · 고객/품목 필터 · 정렬 · 묶어 보기 ─────────────────
    고객·품목·수량은 출하 정보 필드를 우선 쓰고, 비어 있으면 Task 내용에서 인식 */
 const NONE = '(미지정)';
-const KNOWN_CUST = [['Qcells',/q[\s-]?cells|\bHWQ\b/i],['Jefferson (CSI)',/jefferson|\bCSI\b/i],['Korechem',/korechem/i],['Suniva',/suniva/i]];
 const PROD_RE = [['HF',/\bHF\b|불산/i],['HCl',/\bHCL\b|염산/i],['HNO3',/\bHNO\s?3\b|질산/i],['H2SO4',/\bH2SO4\b|황산/i],['KOH',/\bKOH\b/i]];
-function custOf(t){
-  const raw = String(t.customer||'').trim(); if (raw) return raw;
-  const k = KNOWN_CUST.find(([,re]) => re.test(String(t.text||'')));
-  return k ? k[0] : '';
-}
 function prodOf(t){
   if (t.product) return t.product;
   const s = String(t.text||'');
@@ -1637,12 +1674,12 @@ function renderList() {
     return d<0?`-${-d}일`:`D-${d}`;
   };
   const row = t => `
-      <div class="list-item cat" style="${catVars(t.category)}">
+      <div class="list-item cat" style="${catVars(t.category)}${isShip(t)?';border-left-color:'+custMeta(t._cust).c:''}">
         <div>
           <div class="list-text"><span style="color:${CAT(t.category).c};margin-right:4px">${CAT(t.category).ic}</span>${t.patternId?'<span class="pattern-tag" style="margin-right:5px">↻ 정기</span>':''}${escH(t.text)}</div>
           <div class="list-meta">${escH([t.worker, t.poNo?'PO '+t.poNo:''].filter(Boolean).join(' · '))}<span class="m-only"> ${escH([t._cust, t._prod, t._q?t._q.q.toLocaleString()+' '+t._q.u:''].filter(Boolean).join(' · '))}</span> ${arMeta(t)}</div>
         </div>
-        <div class="lc-cust" title="${escH(t._cust)}">${escH(t._cust)}</div>
+        <div class="lc-cust" title="${escH(t._cust)}">${isShip(t)?custTag(t):''}${escH(t._cust)}</div>
         <div>${t._prod?`<span class="prod-tag p-${escH(t._prod)}">${escH(t._prod)}</span>`:''}</div>
         <div class="list-meta r">${t._q?t._q.q.toLocaleString()+' '+t._q.u:''}</div>
         <div class="list-meta">${t.deadline} (${DOW_KO[parseD(t.deadline).getDay()]})</div>
