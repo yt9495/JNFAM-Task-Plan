@@ -788,6 +788,7 @@ function custMeta(name){
 const custTag = (t, lg) => { const m = custMeta(custOf(t)); return `<span class="cu${lg?' lg':''}" style="background:${m.c}" title="고객: ${escH(m.n)}">${escH(m.a)}</span>`; };
 // 빈 IBC·드럼 회수/픽업 → 출하가 아닌 '회수'로 표시 (기존에 출하로 저장된 건도 화면에서 자동 전환)
 const isEmptyReturn = s => /\bempty\b|빈\s*(ibc|드럼|용기|통)/i.test(s) && /ibc|drum|tote|드럼|용기/i.test(s);
+const fixCat = (k, text) => (k==='출하' && isEmptyReturn(String(text||''))) ? '회수' : k;   // 저장 시 사용
 const normCat = t => (t && CAT(t.category).k==='출하' && isEmptyReturn(String(t.text||''))) ? {...t, category:'회수', _autoCat:true} : t;
 const escH = s => String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 function statusMark(t){
@@ -1043,7 +1044,7 @@ async function writeTask(key, changes){
   const p = patterns[v.pid] || {};
   return push(tasksRef, {
     text: p.text||'', deadline: applyHoliday(p, v.occ) || v.occ, worker: p.worker||'',
-    category: p.category||'기타', priority: p.priority||'보통', status: '예정', ...patternShip(p),
+    category: fixCat(p.category||'기타', p.text), priority: p.priority||'보통', status: '예정', ...patternShip(p),
     patternId: v.pid, occDate: v.occ, createdAt: new Date().toISOString(),
     ...changes,
   });
@@ -1115,7 +1116,7 @@ window.ptFreqUI = () => {
 function readPatternForm(){
   return {
     text: document.getElementById('pt-text').value.trim(),
-    category: document.getElementById('pt-cat').value,
+    category: fixCat(document.getElementById('pt-cat').value, document.getElementById('pt-text').value),
     worker: document.getElementById('pt-worker').value.trim(),
     priority: document.getElementById('pt-prio').value,
     memo: document.getElementById('pt-memo').value.trim(),
@@ -1126,7 +1127,7 @@ function readPatternForm(){
     start: document.getElementById('pt-start').value,
     end: document.getElementById('pt-end').value || '',
     holiday: 'keep',
-    ...(document.getElementById('pt-cat').value==='출하' ? readShip('pt') : {}),
+    ...(fixCat(document.getElementById('pt-cat').value, document.getElementById('pt-text').value)==='출하' ? readShip('pt') : {}),
   };
 }
 window.ptPreview = () => {
@@ -1193,6 +1194,26 @@ window.deletePattern = async (id) => {
   showToast('🗑 정기 패턴 삭제됨');
 };
 
+/* ── 빈 IBC 회수: Firebase에 '출하'로 저장된 건 → '회수'로 일괄 변경 ── */
+function emptyReturnTargets(){
+  const t = Object.entries(tasks).filter(([,x]) => x && CAT(x.category).k==='출하' && isEmptyReturn(String(x.text||'')));
+  const p = Object.entries(patterns).filter(([,x]) => x && CAT(x.category).k==='출하' && isEmptyReturn(String(x.text||'')));
+  return {t, p, n: t.length + p.length};
+}
+window.migrateEmptyReturns = async () => {
+  const {t, p, n} = emptyReturnTargets();
+  if (!n) { showToast('변경할 건이 없습니다'); return; }
+  const lines = [...t.map(([,x]) => `· ${x.deadline}  ${x.text}`), ...p.map(([,x]) => `· [정기 패턴] ${x.text}`)];
+  if (!confirm(`아래 ${n}건의 종류를 '출하' → '회수'로 Firebase에 저장합니다.\nAR Manager 출하(청구 확인) 목록에서도 빠집니다.\n\n${lines.slice(0,20).join('\n')}${lines.length>20?`\n… 외 ${lines.length-20}건`:''}`)) return;
+  const upd = {};
+  t.forEach(([k]) => { upd[`tasks/${k}/category`] = '회수'; upd[`tasks/${k}/billable`] = false; });
+  p.forEach(([k]) => { upd[`patterns/${k}/category`] = '회수'; upd[`patterns/${k}/billable`] = false; });
+  setSyncStatus('syncing');
+  try { await update(ref(db), upd); showToast(`✅ ${n}건을 회수로 변경했습니다`); }
+  catch(e) { showToast('변경 실패: ' + e.message, true); }
+  setSyncStatus('connected');
+};
+
 function showToast(msg, isError=false) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -1256,7 +1277,8 @@ function renderCalendar() {
 
   const monthKey = `${curYear}-${String(curMonth+1).padStart(2,'0')}`;
   const catCnt = {}; mTasks.forEach(t=>{ const k=CAT(t.category).k; catCnt[k]=(catCnt[k]||0)+1; });
-  document.getElementById('catLegend').innerHTML = '<span class="lg-title">Task 종류 (클릭해서 필터)</span>' +
+  const mig = emptyReturnTargets();
+  document.getElementById('catLegend').innerHTML = (mig.n ? `<span class="cat-pill" style="--cc:#92400e;--cb:#fdf4e7;border-color:#92400e" onclick="migrateEmptyReturns()" title="Firebase에 '출하'로 저장된 빈 IBC·드럼 회수 건을 '회수'로 변경 (AR Manager 출하 목록에서도 빠짐)">⚠ 출하로 저장된 빈 IBC 회수 ${mig.n}건 → 회수로 일괄 변경</span><span class="lg-break"></span>` : '') + '<span class="lg-title">Task 종류 (클릭해서 필터)</span>' +
     CATS.map(c=>`<span class="cat-pill${calCatFilter===c.k?' on':''}${calCatFilter&&calCatFilter!==c.k?' off':''}" style="${catVars(c.k)}" title="${c.d}" onclick="setCalCat('${c.k}')">${c.ic} ${c.k} <span class="n">${catCnt[c.k]||0}</span></span>`).join('') +
     (calCatFilter?` <span class="cat-pill" style="--cc:#475569;--cb:#fff;border-color:#cbd5e1" onclick="setCalCat('${calCatFilter}')">✕ 전체 보기</span>`:'') +
     (calCatFilter==='출하' ? (() => {   // 출하 선택 시 고객별 알약
@@ -1424,7 +1446,9 @@ window.saveEdit = async (key, ds) => {
   const priority = document.getElementById('edit-prio-'+key).value;
   if (!text || !deadline) { showToast('내용과 마감일을 입력하세요', true); return; }
   setSyncStatus('syncing');
-  await writeTask(key, { text, deadline, worker, category, priority, ...(category==='출하' ? readShip('es-'+key) : {}) });
+  const cat = fixCat(category, text);
+  await writeTask(key, { text, deadline, worker, category: cat, priority, ...(cat==='출하' ? readShip('es-'+key) : {}) });
+  if (cat!==category) showToast('빈 IBC·드럼 회수로 인식 → 회수로 저장');
   setSyncStatus('connected');
   showToast('✅ 수정됐어요!');
   openDayModal(ds, null);
@@ -1463,10 +1487,10 @@ window.addTask = async () => {
   await push(tasksRef, {
     text, deadline: dl,
     worker:   document.getElementById('inp-worker').value.trim()||'',
-    category: document.getElementById('inp-cat').value,
+    category: fixCat(document.getElementById('inp-cat').value, text),
     priority: document.getElementById('inp-prio').value,
     status:   document.getElementById('inp-status').value,
-    ...(document.getElementById('inp-cat').value==='출하' ? readShip('inp') : {}),
+    ...(fixCat(document.getElementById('inp-cat').value, text)==='출하' ? readShip('inp') : {}),
     createdAt: new Date().toISOString(),
   });
   setSyncStatus('connected');
